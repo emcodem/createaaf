@@ -7,19 +7,19 @@ Using auto-py-to-exe to create the standalone exe file, note that because of tha
 
 Help of the exe file (-h):
 
-usage: createaaf.exe [-h] [--debug DEBUG] [--odir ODIR] [--oname ONAME] [--testmode TESTMODE]
-                     FILES OR FOLDERS [FILES OR FOLDERS ...]
+  usage: createaaf.exe [-h] [--debug DEBUG] [--odir ODIR] [--oname ONAME] [--testmode TESTMODE]
+                       FILES OR FOLDERS [FILES OR FOLDERS ...]
 
-AAF File Creator for OPAtom Files
+  AAF File Creator for OPAtom Files
 
-positional arguments:
-  FILES OR FOLDERS     files to add to package (or folder to scan for files)
+  positional arguments:
+    FILES OR FOLDERS     files to add to package (or folder to scan for files)
 
-optional arguments:
-  -h, --help           show this help message and exit
-  --debug DEBUG        Enables debugging, example: --debug 1
-  --odir ODIR          Sets destination folder for aaf output file (default is same folder as the OPAtom File resides)
-  --oname ONAME        Sets destination filename for aaf output file (default is same name as the OPAtom File (.aaf))
-  --testmode TESTMODE  Do not create any file, just output JSON containing found file packages
+  optional arguments:
+    -h, --help           show this help message and exit
+    --debug DEBUG        Enables debugging, example: --debug 1
+    --odir ODIR          Sets destination folder for aaf output file (default is same folder as the OPAtom File resides)
+    --oname ONAME        Sets destination filename for aaf output file (default is same name as the OPAtom File (.aaf))
+    --testmode TESTMODE  Do not create any file, just output JSON containing found file packages
 
 
