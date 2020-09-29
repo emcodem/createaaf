@@ -1,5 +1,5 @@
 # createaaf
-Locates OPAtom mxf files that belong together and creates aaf which contains links to the audio/video opatom files.
+Locates OPAtom mxf files that belong together and creates aaf which contains links to the audio/video opatom files. Mainly designed to be driven by automation tools, especially a commandline executor node in http://ffastrans.com/.
 
 Actually this script is really nothing special, it just utilizes https://github.com/markreidvfx/pyaaf2 to detect which files have the same materialpackage and create a new aaf file using link_external_mxf from pyaaf2.
 
