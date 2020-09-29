@@ -7,6 +7,7 @@ Using auto-py-to-exe to create the standalone exe file, note that because of tha
 
 Help of the exe file (-h):
 
+<pre>
   usage: createaaf.exe [-h] [--debug DEBUG] [--odir ODIR] [--oname ONAME] [--testmode TESTMODE]
                        FILES OR FOLDERS [FILES OR FOLDERS ...]
 
@@ -23,3 +24,5 @@ Help of the exe file (-h):
     --testmode TESTMODE  Do not create any file, just output JSON containing found file packages
 
 
+
+</pre>
