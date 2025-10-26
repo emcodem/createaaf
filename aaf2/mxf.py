@@ -555,6 +555,12 @@ class MXFDescriptor(MXFObject):
             self.data['Locator'] = decode_strong_ref_array(data)
         elif tag == 0x3401:
             self.data['PixelLayout'] = decode_pixel_layout(data)
+        elif tag == 0x3210:
+            self.data['TransferCharacteristic'] = reverse_auid(decode_auid(data)) #0x3210
+        elif tag == 0x3219:
+            self.data['ColorPrimaries'] = reverse_auid(decode_auid(data)) #0x3219
+        elif tag == 0x321a:
+            self.data['CodingEquations'] = reverse_auid(decode_auid(data)) #0x321a
 
 @register_mxf_class
 class MXFMultipleDescriptor(MXFDescriptor):
@@ -604,16 +610,13 @@ class MXFCDCIDescriptor(MXFDescriptor):
 
 
         # optional
-        for key in ('FrameSampleSize', 'ResolutionID', 'Compression', 'VerticalSubsampling',
-                    'SampledWidth', 'SampledHeight'):
+        for key in ('FrameSampleSize', 'ResolutionID', 'Compression', 'VerticalSubsampling','TransferCharacteristic', # emcodem: added transferchar
+                    'ColorPrimaries','CodingEquations','SampledWidth', 'SampledHeight'):
             if key in self.data:
+                #try:
                 d[key].value = self.data[key]
-
-        for item in self.iter_strong_refs("Locator"):
-            d['Locator'].append(item.link())
-            n = self.root.aaf.create.NetworkLocator()
-            n['URLString'].value = ama_path(self.root.path)
-            d['Locator'].append(n)
+                #except:
+                   # pass
 
         d['ContainerFormat'].value = self.root.aaf.dictionary.lookup_containerdef("AAFKLV")
         if self.root.ama:
@@ -621,7 +624,21 @@ class MXFCDCIDescriptor(MXFDescriptor):
             n['URLString'].value = ama_path(self.root.path)
             d['Locator'].append(n)
             d['MediaContainerGUID'].value = AUID("60eb8921-2a02-4406-891c-d9b6a6ae0645")
-
+        else:
+            # emcodem: ok this was a little weird in original pyaaf, the if the source had Locator and we did ama and copied the strong refs so there were 2 locators appended.
+            # if there was no source Locator and not ama mode, we added no locator but recent (2025) avid files always have locator so we also always add one
+            # new strategy: if souce has locator, use it. If not, always set one.
+            if (len(list(self.iter_strong_refs("Locator"))) != 0):
+                for item in self.iter_strong_refs("Locator"):                 
+                    d['Locator'].append(item.link())
+                    n = self.root.aaf.create.NetworkLocator()
+                    n['URLString'].value = ama_path(self.root.path)
+                    d['Locator'].append(n)
+            else:
+                # emcodem: avid aafs seem to always carry locator with picture essence, also audio alwas has it. Before this change, the locator was only added if present in source
+                n = self.root.aaf.create.NetworkLocator()
+                n['URLString'].value = ama_path(self.root.path)
+                d['Locator'].append(n)
         return d
 
 @register_mxf_class
@@ -665,7 +682,10 @@ class MXFANCDataDescriptor(MXFDescriptor):
     def link(self):
         d = self.create_aaf_instance()
         for key in ('SampleRate', 'Length',):
-            d[key].value = self.data[key]
+            try:
+                d[key].value = self.data[key]
+            except:
+                d[key].value = 0 # emcodem: we didnt always see Length in source, setting to zero worked
         return d
 
 @register_mxf_class
@@ -690,7 +710,10 @@ class MXFPCMDescriptor(MXFDescriptor):
         # required
         for key in ('BlockAlign', 'AverageBPS', 'Channels',
             'QuantizationBits', 'AudioSamplingRate', 'SampleRate', 'Length'):
-            d[key].value = self.data[key]
+            try:
+                d[key].value = self.data[key]
+            except:
+                d[key].value = 0 #emcodem:should print warnig
         n = self.root.aaf.create.NetworkLocator()
         n['URLString'].value = ama_path(self.root.path)
         d['Locator'].append(n)
@@ -718,10 +741,34 @@ class MXFImportDescriptor(MXFDescriptor):
         return self.root.aaf.create.ImportDescriptor()
 
     def link(self):
+        
+        # SMPTE SMPTE 377-1-2009 page 89
+        # When a File Package describes internal Essence, the correct value of the Essence Container Property shall be the
+        # Universal Label that identifies the Essence Container used within the MXF file (for example, the specific kind of
+        # Generic Container used for picture or sound data as listed in an Essence mapping specification).
+        # When a File Package describes external Essence and not internal Essence, the correct value of the Essence
+        # Container Property of the Descriptor should be the Universal Label that identifies the external file format 
+
         d = self.create_aaf_instance()
         n = self.root.aaf.create.NetworkLocator()
-        n['URLString'].value = ama_path(self.root.path)
-        d['Locator'].append(n)
+
+        #n['URLString'].value = ama_path(self.root.path)
+        #d['Locator'].append(n)
+        # try to resolve possible existing locator. This is not guaranteed to exist and also not guaranteed to be a single one.
+        
+        if ("Locator" in self.data 
+            and len(self.data["Locator"]) == 1 
+            and self.data["Locator"][0] in self.root.objects):
+            # this only works for op1a and if locator is in src mxf
+            _loc = self.root.objects[self.data["Locator"][0]]
+            if ("URLString" in _loc.data):
+                _url = _loc.data["URLString"]
+                n['URLString'].value = _url
+                d['Locator'].append(n)
+        else:
+            #in any other case, insert the current path of the mxf
+            n['URLString'].value = ama_path(self.root.path)
+            d['Locator'].append(n)
 
         return d
 

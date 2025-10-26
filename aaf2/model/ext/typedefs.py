@@ -105,6 +105,7 @@ opaques = {
 extenums = {
 "CodingEquationsType" : ("02020106-0000-0000-060e-2b3401040101", {
    "0e040501-0201-0000-060e-2b3404010101" : "CodingEquations_ITU2020",
+   "04010101-0202-0000-060e-2b3404010101" : "CodingEquations_ITU709"
    },
 ),
 "ColorPrimariesType"  : ("02020105-0000-0000-060e-2b3401040101", {
@@ -114,7 +115,7 @@ extenums = {
    "0e040501-0303-0000-060e-2b3404010101" : "ColorPrimaries_Sony_SGamut3_Cine",
    },
 ),
-"TransferCharacteristicType" : ("02020102-0000-0000-060e-2b3401040101", {
+"TransferCharacteristicType" : ("02020102-0000-0000-060e-2b3401040101", {  #emcodem 32.10
    "0e040501-0101-0000-060e-2b3404010101" : "TransferCharacteristic_DPXPrintingDensity",
    "0e040501-0102-0000-060e-2b3404010101" : "TransferCharacteristic_DPXLogarithmic",
    "0e040501-0103-0000-060e-2b3404010101" : "TransferCharacteristic_SRGB",
