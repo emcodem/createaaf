@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "copy-executed-file",
+      "type": "shell",
+      "command": "copy",
+      "args": [
+        "${file}",
+        "C:\\temp\\ffastrans_141\\avid_tools\\0.1\\createaaf"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
