@@ -148,7 +148,7 @@ def ensureLUTFile():
     {
         "name": "slog3_to_709",
         "trc": "060e2b34040101060e06040101010605",
-        "lut": "<ColorTransformationList><Name>From S-Log3 / S-Gamut3.Cine to Rec.709</Name><ColorTransformation><ExternalLut><Name>Sony_S3C 1. SLog3-SG3.Cine to LC-709</Name><LutFileName>Slog3SGamut3.CineToLC-709 (video levels).cube</LutFileName><LutFileFormat>iridas</LutFileFormat><LutDimension>3D</LutDimension></ExternalLut></ColorTransformation></ColorTransformationList>"
+        "lut": "<ColorTransformationList><Name>From S-Log3 / S-Gamut3.Cine to Rec.709</Name><ColorTransformation><ExternalLut><Name>Sony_S3C 1. SLog3-SG3.Cine to LC-709</Name><LutFileName>SLog3SGamut3.CineToLC-709 (video levels).cube</LutFileName><LutFileFormat>iridas</LutFileFormat><LutDimension>3D</LutDimension></ExternalLut></ColorTransformation></ColorTransformationList>"
     },
     {
         "name": "clog2_to_709",
@@ -211,7 +211,11 @@ def attachLUT(f,existing_mxf_file_path):
     #select lut from userparam from color_luts.json
     work_lut = None
     if args.lut == "auto": 
-        work_lut = autoLUT(lut_table, existing_mxf_file_path)
+        try:
+            work_lut = autoLUT(lut_table, existing_mxf_file_path)
+        except:
+            logprint("Autolut failed, no trc in " + existing_mxf_file_path)
+            pass
     else:
         work_lut = next(
             (entry["lut"] for entry in lut_table if entry["name"] == work_lut),
@@ -300,6 +304,8 @@ for _item in args.files:
     filemode = None
     if (os.path.isdir(_item)):
         logprint("Detected directory from userinput:" + _item)
+        logprint("Ensure output dire exists:" + args.odir)
+        os.makedirs(args.odir, exist_ok=True)
         process_directory(_item)
     elif (os.path.isfile(_item)):
         filemode = 1
@@ -307,6 +313,9 @@ for _item in args.files:
 if (filemode):
     if args.odir == None:
         args.odir = os.path.dirname(args.files[0])
+    
+    os.makedirs(args.odir, exist_ok=True)
+    
     if args.oname == None:
         base=os.path.basename(args.files[0])
         args.oname = os.path.splitext(base)[0] + ".aaf"

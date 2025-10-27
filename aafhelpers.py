@@ -7,6 +7,7 @@ from pathlib import Path
 filename = getframeinfo(currentframe()).filename
 parent = str(Path(filename).resolve().parent)
 sys.path.append(parent)
+
 import aaf2
 import aaf2.mxf
 

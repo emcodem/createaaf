@@ -29,6 +29,18 @@
             ],
             "console": "integratedTerminal"
         },
+         {
+            "name": "aaftimelineparser.py",
+            "type": "python",
+            "request": "launch",
+            "program": "aaftimelineparser.py",
+            "args": [
+                "-i", "C:\\temp\\1avid\\consolidated\\Untitled Sequence.01.aaf",
+                "-o", "C:\\temp\\1avid\\consolidated",
+                "-bmx", "C:\\temp\\ffastrans_141\\avid_tools\\0.3\\bmx\\bmxtranswrap.exe"
+            ],
+            "console": "integratedTerminal"
+        },
       
     ]
 }
