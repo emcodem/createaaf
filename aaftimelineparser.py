@@ -38,10 +38,13 @@ from opentimelineio.schema import ExternalReference
 from pymediainfo import MediaInfo
 
 args = None
+for name in ["aaf2"]:
+    logging.getLogger(name).setLevel(logging.WARNING)
 logging.basicConfig(
     level=logging.DEBUG,                   # minimum level to log
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
+
 @dataclass
 class CutClip:
     path: Path
