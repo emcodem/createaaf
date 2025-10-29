@@ -1858,7 +1858,7 @@ class CompoundFileBinary(object):
             raise ValueError("can not add entry to non storage type")
 
         dir_id = self.next_free_dir_id()
-        logging.debug("next dir id %d" % dir_id)
+        #logging.debug("next dir id %d" % dir_id)
 
         entry = DirEntry(self, dir_id)
         entry.name = basename

@@ -166,13 +166,16 @@ def _parsed_args():
         help='for bmx command, add this amount of frames before and after each partial to restore',
     )
     result = parser.parse_args()
+    logging.debug("Input arguments: %s",result)
     
-    if not result.input:
-        parser.error("-i/--input is a required argument")
-    if not result.output:
-        parser.error("-o/--output is a required argument")
-
     return result
+
+def ensure_two_backslashes(s: str) -> str:
+    if not s.startswith('\\\\'):
+        # Remove any existing leading backslashes and then add two
+        s = s.lstrip('\\')
+        s = '\\\\' + s
+    return s
 
 def parseLocatorFromAAF():
     locator_urls = []
@@ -183,16 +186,24 @@ def parseLocatorFromAAF():
                 if isinstance(mob.descriptor, aaf2.essence.CDCIDescriptor):
                     #find network Locator
                     for locator in mob.descriptor.locator:
-                        p = urlparse(locator.getvalue("URLString"))
-                        file_path = url2pathname(p.path)
-                        while file_path.startswith('\\') and ':' in file_path:
-                            file_path = file_path[1:]
-
+                        #p = urlparse(locator.getvalue("URLString"))
+                        #file_path = url2pathname(p.path)
+                        # while file_path.startswith('\\') and ':' in file_path:
+                        #     file_path = file_path[1:]
+                        # if (':' not in file_path):
+                        #     file_path = ensure_two_backslashes(file_path)
+                        file_path = getPathFromNetworkLocator(locator)
                         locator_urls.append(file_path)
     return locator_urls
 
 def getPathFromNetworkLocator(locator):
-    p = urlparse(locator.data["URLString"])
+    p = None
+    if type(locator) == aaf2.core.AAFObject:
+        #assumes aaf object Networklocator
+        p = urlparse(locator.getvalue("URLString"))
+    else:
+        #assumes mxf object Networklocator
+        p = urlparse(locator.data["URLString"])
     file_path = ""
     if p.netloc == '':
         file_path = unquote(p.path)
@@ -349,6 +360,7 @@ def execute_bmx(cmds):
 
 
 def copy_files_parallel(file_list, target_dir, max_workers=4):
+    logging.debug("Ensure output dir: %s",target_dir)
     os.makedirs(target_dir, exist_ok=True)
     target_dir = Path(target_dir)
     
@@ -375,15 +387,23 @@ def main():
     """Parse arguments and convert the files."""
     global args
     args = _parsed_args()
+    logging.debug("Creating output dir: %s",args.output)
     os.makedirs(args.output, exist_ok=True)
     #todo: searchpaths can contain the original mxf paths, consider them at resolving media
     searchpaths = []
     try:
         locator_urls = parseLocatorFromAAF()
+        logging.debug("Found Locators in AAF: %s",locator_urls)
+    except Exception as e:
+        logging.error(f"Unexprected Error parsing AAF locators: {e}", exc_info=True)
+    try:
         for locator_url in locator_urls:
             searchpaths.extend(parseLocatorFromMXF(locator_url))
-    except:
-        logging.warning("Could not parse locator from AAF file. If the files linked in the aaf do not exist anymore, you need to provide searchpath parameter")
+        if (len(searchpaths) == 0):
+            logging.debug("Did not find any locators in the MXF files that were parsed from the AAF")
+    except Exception as e:
+        logging.error(f"Unexprected Error parsing MXF locators: {e}", exc_info=True)
+
     in_adapter = otio.adapters.from_filepath(args.input).name
 
     result_tl = otio.adapters.read_from_file(

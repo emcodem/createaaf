@@ -8,7 +8,8 @@ import argparse
 import subprocess
 import types
 import re
-
+import logging
+#logging.basicConfig(format="%(asctime)s [%(levelname)s] %(message)s", level=logging.DEBUG)
 #addon modules (portable)
 from inspect import currentframe, getframeinfo
 from pathlib import Path
@@ -19,18 +20,21 @@ import aaf2
 import aaf2.mxf
 from aafhelpers import mxf_deep_search_by_key
 
+sys.path.append(str(Path.joinpath(Path(parent), "helpers")))
+from helpers import win_argparse
+
+
 #globals 
 
 created_file_count = 0
 target_filename = None
+args = None
 
-# functions
-
-def logprint(what):
-    if args.debug:
-        print (what)
-
-
+# logging.debug("sys.argv before parsing: %s", sys.argv)
+# sys.argv = [
+#     arg[:-1] if arg.endswith('"') and arg[-2] == '\\' else arg
+#     for arg in sys.argv
+# ]
 
 def sort_filenames_video_first(name):
     #sort filenames list so _vX files go first (video)
@@ -42,18 +46,18 @@ def sort_filenames_video_first(name):
 
 def find_opatom_files(dir):
     
-    logprint("Scanning for files in " + dir)
+    logging.debug("Scanning for files in " + dir)
     #foreach file in directory, get out Materialpackage ID and look if all needed parts of opatom file are there (video/audio)
     all_packages = {}
     for _file in os.listdir(dir):
-        logprint ("Processing file " + _file)
+        logging.debug ("Processing file " + _file)
         m = None
         try:
             m = aaf2.mxf.MXFFile(os.path.join(dir , _file))
             if m.operation_pattern != "OPAtom":
                 raise Exception("can only link OPAtom mxf files")
         except Exception as e:
-            logprint(_file + " is not an OPAtom mxf file " )
+            logging.debug(_file + " is not an OPAtom mxf file " )
             continue
             
         _this_package = {'slotcount' : 0, 'files':[]}
@@ -67,13 +71,14 @@ def find_opatom_files(dir):
             all_packages[_last_uid] = _this_package
         all_packages[_last_uid]['files'].append(os.path.join(dir,_file))
         all_packages[_last_uid]['files'].sort(key=sort_filenames_video_first)    
-    logprint("Folderscan done, result:")
-    logprint (all_packages)
+    logging.debug("Folderscan done, result:")
+    logging.debug (all_packages)
     return all_packages
        
 def process_directory(dir):
     global created_file_count
-    
+    global args
+
     packages = find_opatom_files(dir)
     if (args.allinone):
         first_src = None
@@ -93,18 +98,18 @@ def process_directory(dir):
         if (args.skipcheck != None or packages[pack]['slotcount'] == len(packages[pack]['files'])):
             if args.odir == None:
                 args.odir = os.path.dirname(packages[pack]['files'][0])
-                logprint("Calculated output directory: " + args.odir + " From file: " + packages[pack]['files'][0])
+                logging.debug("Calculated output directory: " + args.odir + " From file: " + packages[pack]['files'][0])
             if args.oname == None:
                 base=os.path.basename(packages[pack]['files'][0])
                 args.oname = os.path.splitext(base)[0] + ".aaf"
-                logprint("Calculated output filename:" + args.oname )
+                logging.debug("Calculated output filename:" + args.oname )
 
             if(args.testmode): #just output json, do not write aaf
-                logprint("TESTMODE, no aaf is created, output is:")
+                logging.debug("TESTMODE, no aaf is created, output is:")
                 print (packages)
                 continue
             #create output AAF
-            logprint ("Creating " + os.path.join(args.odir,args.oname))
+            logging.debug ("Creating " + os.path.join(args.odir,args.oname))
             
             sourcefiles = []
             with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
@@ -121,7 +126,7 @@ def process_directory(dir):
                     else:
                         mobs = f.content.link_external_mxf(_file)
                     
-                    logprint ("Added " + _file)
+                    logging.debug ("Added " + _file)
 
                 #adds descriptive metadata to the aaf, mostly about controlling the avid metadata in the bin
 
@@ -136,8 +141,8 @@ def process_directory(dir):
             print ("Created file: " + os.path.join(args.odir,args.oname))
             args.oname = None # reset oname for next file            
         else:
-            logprint("Not yet ready for processing, slotcount is " + str(packages[pack]['slotcount']) + " and filecount is " + str(len(packages[pack]['files'])))
-            logprint(packages[pack]['files'])
+            logging.debug("Not yet ready for processing, slotcount is " + str(packages[pack]['slotcount']) + " and filecount is " + str(len(packages[pack]['files'])))
+            logging.debug(packages[pack]['files'])
     sys.exit(0)
 
 def ensureLUTFile():
@@ -174,7 +179,7 @@ def autoLUT(lut_table, existing_mxf_file_path):
     m.walker = types.MethodType(mxf_deep_search_by_key, m) #extend the MXFFile Class, we need "self" to work in mxf_deep_search_by_key
     trc = m.walker(search="TransferCharacteristic")
     if (trc == None):
-        logprint("Autolut failed, no trc in " + existing_mxf_file_path)
+        logging.debug("Autolut failed, no trc in " + existing_mxf_file_path)
     trc = aaf2.mxf.reverse_auid(trc).hex
     # prim = m.walker(search="ColorPrimaries")
     # eq = m.walker(search="CodingEquations")
@@ -183,16 +188,16 @@ def autoLUT(lut_table, existing_mxf_file_path):
         None
     )
     if (work_lut == None):
-        logprint("Autolut failed, no matching LUT found for trc" + trc)
+        logging.debug("Autolut failed, no matching LUT found for trc" + trc)
     else:
-        logprint("Autolut result: " + work_lut)
+        logging.debug("Autolut result: " + work_lut)
     return work_lut
 
 
 
 def attachLUT(f,existing_mxf_file_path):
     #ensure color luts file exists
-    
+    global args
     if args.lut == None: #no userinput no work
         return
     
@@ -214,7 +219,7 @@ def attachLUT(f,existing_mxf_file_path):
         try:
             work_lut = autoLUT(lut_table, existing_mxf_file_path)
         except:
-            logprint("Autolut failed, no trc in " + existing_mxf_file_path)
+            logging.debug("Autolut failed, no trc in " + existing_mxf_file_path)
             pass
     else:
         work_lut = next(
@@ -281,63 +286,103 @@ def probe(path, show_packets=False):
 
 #MAIN
 #commandline arguments
-parser = argparse.ArgumentParser(description='AAF File Creator for OPAtom Files')
-parser.add_argument('files', metavar='FILES OR FOLDERS', type=str, nargs='+',
-                    help='files to add to package (or folder to scan for files)')
-parser.add_argument('--debug', help='Enables debugging, example: --debug 1')
-parser.add_argument('--odir', help='Sets destination folder for aaf output file (default is same folder as the OPAtom File resides)')
-parser.add_argument('--lut', help='In Avid Colortransformation (lut), default is no lut. Check color_luts.json. Example:slog3_to_709. use auto for analyzing the input mxf trc and match with color_luts.json. This will take the first mxf video file only')
 
-parser.add_argument('--oname', help='Sets destination filename for aaf output file (default is same name as the OPAtom File (.aaf))')
-parser.add_argument('--testmode', help='Do not create any file, just output JSON containing found file packages')
-parser.add_argument('--skipcheck', help='Prevent checking if there are as many source files as slots found in the op-atom')
-parser.add_argument('--amalink', help='Create AMA linked aaf (needs ffprobe in PATH)')
-parser.add_argument('--allinone', help='Add all source files to a single aaf, cannot work for ama')
-args = parser.parse_args()
+#parser = argparse.ArgumentParser(description='AAF File Creator for OPAtom Files')
 
-logprint(args.files)
-
-#process everything
-
-
-for _item in args.files:
-    filemode = None
-    if (os.path.isdir(_item)):
-        logprint("Detected directory from userinput:" + _item)
-        logprint("Ensure output dire exists:" + args.odir)
-        os.makedirs(args.odir, exist_ok=True)
-        process_directory(_item)
-    elif (os.path.isfile(_item)):
-        filemode = 1
-        logprint("Detected file from userinput: " + _item)
-if (filemode):
-    if args.odir == None:
-        args.odir = os.path.dirname(args.files[0])
+def setupParser(parser):
     
-    os.makedirs(args.odir, exist_ok=True)
-    
-    if args.oname == None:
-        base=os.path.basename(args.files[0])
-        args.oname = os.path.splitext(base)[0] + ".aaf"
-    if args.amalink:
-        for _item in args.files:
-            meta = probe(_item)
-            with aaf2.open(_item + ".aaf", 'w') as f:
-                mobs = f.content.create_ama_link(_item, meta)
-                source_packages = [pkg for pkg in mobs if isinstance(pkg, aaf2.mobs.SourceMob)]
-                #do we need to attach lut for ama?
-                logprint("AMA Added " + _item)
-        checkResult(_item + ".aaf")
-        print ("Created file: " + _item + ".aaf")
+    parser.add_argument('--debug', help='Enables debugging, example: --debug 1')    
+    parser.add_argument('--lut', help='In Avid Colortransformation (lut), default is no lut. Check color_luts.json. Example:slog3_to_709. use auto for analyzing the input mxf trc and match with color_luts.json. This will take the first mxf video file only')
+    parser.add_argument('--oname', help='Sets destination filename for aaf output file (default is same name as the OPAtom File (.aaf))', required=True)
+    parser.add_argument('--testmode', help='Do not create any file, just output JSON containing found file packages')
+    parser.add_argument('--skipcheck', help='Prevent checking if there are as many source files as slots found in the op-atom')
+    parser.add_argument('--amalink', help='Create AMA linked aaf (needs ffprobe in PATH)')
+    parser.add_argument('--allinone', help='Add all source files to a single aaf, cannot work for ama')
+    parser.add_argument('files', metavar='FILES OR FOLDERS', type=str, nargs='+',
+                        help='files to add to package (or folder to scan for files)')
+    parser.add_argument('--odir', 
+                        nargs='?',      # allow partial or split paths
+                        help='Sets destination folder for aaf output file (default is same folder as the OPAtom File resides)', 
+                        type=str,
+                        required=True,)
+
+def main():
+    global args
+    #parse arguments
+    parser = None
+    try:
+        
+        parser = argparse.ArgumentParser( epilog="create AAF from OPAtom or AMA_linked from other formats")
+        setupParser(parser)
+        args = parser.parse_args()
+        logging.debug("Input arguments: %s",args)
+    except:
+        #dirty workaround only works outside of vscode, used to workaround python bug where you cannot submit arg like "C:\path\" (last backslash disturbing)
+        parser = win_argparse.CustomArgumentParser( epilog="create AAF from OPAtom or AMA_linked from other formats" ) 
+        setupParser(parser)
+        args = parser.parse_args()
+        logging.debug("Input arguments: %s",args)
+
+    #setup logging
+    if args.debug:
+        logging.info("Setting up debug logs")
+        script_dir = Path(__file__).resolve().parent
+        log_file = script_dir / "createaaf.log"
+        if os.path.exists(log_file) and os.path.getsize(log_file) > 1000000:
+            # Truncate (reset) the log file
+            open(log_file, "w").close()
+        
+        logger = logging.getLogger()  # root logger
+        file_handler = logging.FileHandler(log_file, mode='a')
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+        logging.basicConfig(force=True, format="%(asctime)s [%(levelname)s] %(message)s",level=logging.DEBUG,filename=log_file)
     else:
-        for _item in args.files:
-            with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
-                for _file in args.files:
-                    f.content.link_external_mxf(_file)
-                    logprint("Added " + _file)
-    checkResult(os.path.join(args.odir,args.oname))
-    print ("Created file: " + os.path.join(args.odir,args.oname))        
-    
-    
+        logging.basicConfig(level=logging.INFO)
+    #process everything
+
+    for _item in args.files:
+        filemode = None
+        if (os.path.isdir(_item)):
+            logging.debug("Detected directory from userinput:" + _item)
+            logging.debug("Ensure output dire exists:" + args.odir)
+            os.makedirs(args.odir, exist_ok=True)
+            process_directory(_item)
+        elif (os.path.isfile(_item)):
+            filemode = 1
+            logging.debug("Detected file from userinput: " + _item)
+    if (filemode):
+        if args.odir == None:
+            args.odir = os.path.dirname(args.files[0])
+        
+        os.makedirs(args.odir, exist_ok=True)
+        
+        if args.oname == None:
+            base=os.path.basename(args.files[0])
+            args.oname = os.path.splitext(base)[0] + ".aaf"
+        if args.amalink:
+            for _item in args.files:
+                meta = probe(_item)
+                with aaf2.open(_item + ".aaf", 'w') as f:
+                    mobs = f.content.create_ama_link(_item, meta)
+                    source_packages = [pkg for pkg in mobs if isinstance(pkg, aaf2.mobs.SourceMob)]
+                    #do we need to attach lut for ama?
+                    logging.debug("AMA Added " + _item)
+            checkResult(_item + ".aaf")
+            print ("Created file: " + _item + ".aaf")
+        else:
+            for _item in args.files:
+                with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
+                    for _file in args.files:
+                        f.content.link_external_mxf(_file)
+                        logging.debug("Added " + _file)
+        checkResult(os.path.join(args.odir,args.oname))
+        print ("Created file: " + os.path.join(args.odir,args.oname))        
+        
+        
 #todo: check if target file is greater than 111kb
-logprint("Done")
+logging.debug("Done")
+
+if __name__ == '__main__':
+    main()

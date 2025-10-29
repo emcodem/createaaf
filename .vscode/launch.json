@@ -2,26 +2,24 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File with my args",
-            "type": "python",
+            "name": "launch createaaf.py",
+            "type": "debugpy",
             "request": "launch",
             "program": "createaaf.py",
             "args": [
-                "--odir", "C:\\temp\\1avid\\dnx36",
+                "--odir", "C:\\temp\\1avid\\dnx36\\",
                 "--oname", "FX6_EO0002_v1_from_createaa.aaf", 
                 "--debug","1",
                 "--skipcheck","1",
-                
                 "--lut","auto",
                 "C:\\Users\\Public\\Documents\\Avid Media Composer\\Avid MediaFiles\\MXF\\1"
                 
             ],
-            "preLaunchTask": "copy-executed-file",
             "console": "integratedTerminal"
         },
           {
-            "name": "Run analyze colors .py",
-            "type": "python",
+            "name": "analyze_colors.py",
+            "type": "debugpy",
             "request": "launch",
             "program": "analyze_mxf_colors.py",
             "args": [
@@ -31,7 +29,7 @@
         },
          {
             "name": "aaftimelineparser.py",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "aaftimelineparser.py",
             "args": [
