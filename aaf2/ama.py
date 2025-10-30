@@ -488,7 +488,7 @@ def create_media_link(f, path, metadata):
     if ext == '.mxf' or ext == '.MXF':
         m = mxf.MXFFile(path)
         m.ama = True
-        m.dump()
+        #m.dump()
         return m.link(f)
 
     format_info = FormatInfo(metadata)
