@@ -263,7 +263,7 @@ def checkResult(_filename):
         size = os.path.getsize(_filename)
         if (size < 400000):
             raise Exception("Created file [" +_filename+ "] does not have minimum file size of 400kb")
-    except (Exception, e):
+    except Exception as e:
         print ("Error: " + e)
         sys.exit(1)
         
@@ -377,7 +377,7 @@ def main():
                     for _file in args.files:
                         f.content.link_external_mxf(_file)
                         logging.debug("Added " + _file)
-        checkResult(os.path.join(args.odir,args.oname))
+                checkResult(os.path.join(args.odir,args.oname))
         print ("Created file: " + os.path.join(args.odir,args.oname))        
         
         
