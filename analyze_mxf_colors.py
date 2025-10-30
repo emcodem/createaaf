@@ -14,7 +14,7 @@ sys.path.append(parent)
 import aaf2
 import aaf2.mxf
 
-from aafhelpers import mxf_deep_search_by_key
+from aaf_helpers.aafhelpers import mxf_deep_search_by_key
 try:
     m = aaf2.mxf.MXFFile(sys.argv[1])
     m.walker = types.MethodType(mxf_deep_search_by_key, m) #extend the MXFFile Class, we need "self" to work in mxf_deep_search_by_key

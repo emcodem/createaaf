@@ -23,12 +23,16 @@ import types
 from shutil import copy2
 #custom modules
 
-
 from inspect import currentframe, getframeinfo
 filename = getframeinfo(currentframe()).filename 
 parent = str(Path(filename).resolve().parent)
+
 sys.path.append(parent) #for current path
-from aafhelpers import mxf_deep_search_by_key # important order of sys paths here, aafhelpers must work with our custom aaf2!
+from aaf_helpers.aafhelpers import mxf_deep_search_by_key # important order of sys paths here, aafhelpers must work with our custom aaf2!
+from aaf_helpers.avid_lut import attachLUT
+
+sys.path.append(str(Path.joinpath(Path(parent), "helpers")))
+from helpers import exec_ffprobe
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "venv/Lib/site-packages/")) #for e.g. OTIO
 import aaf2
@@ -53,6 +57,11 @@ class CutClip:
     bmx_start_frames: int = 0
     bmx_duration_frames: int = 0
 
+class BMXCmd():
+    def __init__(self, cmd, output):
+        self.cmd = cmd
+        self.output = output
+
 class CutClipList(list):
     def append(self, item: CutClip):
         # checks if path is already in list, if yes expand start and duration 
@@ -63,23 +72,23 @@ class CutClipList(list):
             )
 
         # Search for an existing clip with the same path
-        for existing in self:
-            if existing.path == item.path:
-                existing_end = existing.start + existing.duration
-                new_end = item.start + item.duration
+        # for existing in self:
+        #     if existing.path == item.path:
+        #         existing_end = existing.start + existing.duration
+        #         new_end = item.start + item.duration
 
-                # Update start if new item starts earlier
-                if item.start < existing.start:
-                    existing.start = item.start
-                    logging.debug("Updating start %s to: %i",item.path,existing.start)
+        #         # Update start if new item starts earlier
+        #         if item.start < existing.start:
+        #             existing.start = item.start
+        #             logging.debug("Updating start %s to: %i",item.path,existing.start)
+                    
+        #         # Update duration if new item ends later
+        #         if new_end > existing_end:
+        #             existing.duration = new_end - existing.start
+        #             logging.debug("Updating duration %s to: %i",item.path,existing.duration)
 
-                # Update duration if new item ends later
-                if new_end > existing_end:
-                    existing.duration = new_end - existing.start
-                    logging.debug("Updating duration %s to: %i",item.path,existing.duration)
-
-                # Don’t append a duplicate
-                return
+        #         # Don’t append a duplicate
+        #         return
             
         # No existing clip with same path
         super().append(item)
@@ -286,9 +295,8 @@ def generate_bmx(clips,output_path,bmxtranswrap):
     output_path = Path(output_path)
     _cmds = []
     apply_handle(clips,args.handle)
-    for clip in clips:
 
-        # analyze colors
+    for clip in clips:   
         logging.debug("Analyzing colors for clip: %s", clip.path)
         color_args = ""
         try:
@@ -304,11 +312,16 @@ def generate_bmx(clips,output_path,bmxtranswrap):
                 color_args += (" --color-prim urn:smpte:ul:" + aaf2.mxf.reverse_auid(prim).hex) + " "
             if (eq):
                 color_args += (" --coding-eq urn:smpte:ul:" + aaf2.mxf.reverse_auid(eq).hex) + " "
+
         except Exception:
             logging.warning("Could not analyze colors for clip: %s", clip.path)
         logging.debug("Colors for clip: %s", color_args)
-        # FFmpeg expects forward slashes even on Windows
-        _out_file = output_path / Path(clip.path).name
+        
+        # we consolidate each clip into its separate dir in order to support multiple cuts on a single source
+        _out_dir  = output_path / (str(Path(clip.path).stem) + str(clip.bmx_start_frames) + "-" + str(clip.bmx_duration_frames))
+        _out_file = _out_dir / Path(clip.path).name
+        logging.debug("Creating output directory: %s",_out_dir)
+        os.makedirs(_out_dir, exist_ok=True)
         #_orig_rate = get_source_rate(str(clip.path)) # mediainfo todo: add timeline rate as default
         bmxargs = [
                    str (bmxtranswrap) + " -t op1a -o \""+str(_out_file)+"\" --start ",
@@ -317,8 +330,8 @@ def generate_bmx(clips,output_path,bmxtranswrap):
                    color_args,
                    " \""+str(clip.path)+"\""]
         bmxargs = [str(x) for x in bmxargs]
-        bmxargs = " ".join(bmxargs)
-        _cmds.append (bmxargs)
+        bmxargs = " ".join(bmxargs)     
+        _cmds.append (BMXCmd(bmxargs,_out_file))
     return (_cmds)
 
 def apply_handle(clips: List[CutClip], handle: int = 0) -> None:
@@ -336,12 +349,12 @@ def apply_handle(clips: List[CutClip], handle: int = 0) -> None:
         clip.bmx_duration_frames = round(handle + reduction + duration_frames)
         logging.debug("Calculated bmx start and duration: %i, %i", clip.bmx_start_frames, clip.bmx_duration_frames)
 
-def execute_bmx(cmds):
+def execute_bmx(bmx_cmds: List[BMXCmd]):
     #execute all bmx cmds parallel
     results = []
     with ThreadPoolExecutor() as executor:
-        {logging.debug("Executing: " +"\n" + cmd) for cmd in cmds}
-        future_to_cmd = {executor.submit(run_command, cmd): cmd for cmd in cmds}
+        {logging.debug("Executing: " +"\n" + cmd.cmd) for cmd in bmx_cmds}
+        future_to_cmd = {executor.submit(run_command, cmd.cmd): cmd.cmd for cmd in bmx_cmds}
         for future in as_completed(future_to_cmd):
             results.append(future.result())
     #check results        
@@ -355,12 +368,27 @@ def execute_bmx(cmds):
             logging.error("-" * 40)
 
     if any(not r["success"] for r in results):
-        logging.error("One or more commands failed!")
+        logging.error("One or more BMX consolidate commands failed!")
         sys.exit(2)
     else:
-        logging.debug("All BMX commands succeeded!") 
- 
+        logging.debug("All BMX consolidate commands succeeded!")
+        #collect output paths and generate aaf
+        all_outputs = [r.output for r in bmx_cmds]
+        return all_outputs
 
+def write_output_aaf(all_outputs):
+        filename_no_ext = Path(args.input).stem
+        out_aaf_path = os.path.join(args.output, filename_no_ext + "_consolidated.aaf")
+        logging.info("Output aaf: %s", out_aaf_path)
+        with aaf2.open(out_aaf_path, 'w') as f:
+            for _file in all_outputs:
+                meta = ""
+                if not str(_file).lower().endswith(".mxf"):
+                    #we need the probe only for non mxf because aaf2 does parse mxf natively
+                    meta = exec_ffprobe.get_ffprobe_info(str(_file))
+                logging.debug("AMA linking file: %s",_file)
+                f.content.create_ama_link(str(_file),meta) # todo emcodem: find out why ama linking dont work 
+                attachLUT(f,str(_file),"auto")
 
 def copy_files_parallel(file_list, target_dir, max_workers=4):
     logging.debug("Ensure output dir: %s",target_dir)
@@ -446,8 +474,14 @@ def main():
 
     logging.info(generate_ffconcat(ffconcat_clips))
     bmx_cmds = (generate_bmx(bmx_clips,args.output,args.bmx))
-    execute_bmx(bmx_cmds)
-    copy_files_parallel(copy_clips,args.output)
+    all_output_files = execute_bmx(bmx_cmds)
+
+    if (len(copy_clips) > 0):
+        copy_files_parallel(copy_clips,args.output)
+        all_output_files.extend(copy_clips)
+
+    write_output_aaf(all_output_files)
+
 
 if __name__ == '__main__':
     try:

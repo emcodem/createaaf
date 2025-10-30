@@ -6,23 +6,27 @@ import glob, os
 import json
 import argparse
 import subprocess
-import types
+
 import re
 import logging
 #logging.basicConfig(format="%(asctime)s [%(levelname)s] %(message)s", level=logging.DEBUG)
 #addon modules (portable)
+
 from inspect import currentframe, getframeinfo
 from pathlib import Path
+
+#add module paths to sys path, otherwise portable perl cannot resolve it
 filename = getframeinfo(currentframe()).filename
 parent = str(Path(filename).resolve().parent)
 sys.path.append(parent)
 import aaf2
 import aaf2.mxf
-from aafhelpers import mxf_deep_search_by_key
 
 sys.path.append(str(Path.joinpath(Path(parent), "helpers")))
 from helpers import win_argparse
 
+sys.path.append(str(Path.joinpath(Path(parent), "aaf_helpers")))
+from aaf_helpers.avid_lut import attachLUT
 
 #globals 
 
@@ -58,7 +62,7 @@ def find_opatom_files(dir):
                 raise Exception("can only link OPAtom mxf files")
         except Exception as e:
             logging.debug(_file + " is not an OPAtom mxf file " )
-            continue
+            
             
         _this_package = {'slotcount' : 0, 'files':[]}
         _last_uid = None
@@ -87,14 +91,14 @@ def process_directory(dir):
                 for _file in packages[pack]['files']:
                     first_src = first_src or _file
                     mobs = f.content.link_external_mxf(_file)
-            attachLUT(f,first_src)
+            attachLUT(f,first_src,args.lut)
             #attach_SRCFILE(f)
 
         checkResult(os.path.join(args.odir,args.oname))
         return
     
     #non allinone mode        
-    for pack in packages:   
+    for pack in packages:
         if (args.skipcheck != None or packages[pack]['slotcount'] == len(packages[pack]['files'])):
             if args.odir == None:
                 args.odir = os.path.dirname(packages[pack]['files'][0])
@@ -145,98 +149,6 @@ def process_directory(dir):
             logging.debug(packages[pack]['files'])
     sys.exit(0)
 
-def ensureLUTFile():
-    #just ensures the file exists, if not write with defaults
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    lut_file = os.path.join(script_dir, "color_luts.json")
-    default_luts = [
-    {
-        "name": "slog3_to_709",
-        "trc": "060e2b34040101060e06040101010605",
-        "lut": "<ColorTransformationList><Name>From S-Log3 / S-Gamut3.Cine to Rec.709</Name><ColorTransformation><ExternalLut><Name>Sony_S3C 1. SLog3-SG3.Cine to LC-709</Name><LutFileName>SLog3SGamut3.CineToLC-709 (video levels).cube</LutFileName><LutFileFormat>iridas</LutFileFormat><LutDimension>3D</LutDimension></ExternalLut></ColorTransformation></ColorTransformationList>"
-    },
-    {
-        "name": "clog2_to_709",
-        "trc": "060e2b340401010d0e15000102000000",
-        "lut": "<ColorTransformationList><ColorTransformation><ExternalLut><Name>Canon C-Log to REC709</Name><LutFileName>Canon_CLog2Video_Rec709_iridas1d.txt</LutFileName><LutFileFormat>iridas</LutFileFormat><LutDimension>1D</LutDimension></ExternalLut></ColorTransformation></ColorTransformationList>"
-    },
-    {
-		"comment": "for canon we dont have details yet, we map all found trc ul's to the one and only clog lut of avid",
-        "name": "clog3_to_709",
-        "trc": "060e2b340401010d0e15000107000000",
-        "lut": "<ColorTransformationList><ColorTransformation><ExternalLut><Name>Canon C-Log to REC709</Name><LutFileName>Canon_CLog2Video_Rec709_iridas1d.txt</LutFileName><LutFileFormat>iridas</LutFileFormat><LutDimension>1D</LutDimension></ExternalLut></ColorTransformation></ColorTransformationList>"
-    }
-]
-    if not os.path.exists(lut_file):
-        with open(lut_file, "w", encoding="utf-8") as f:
-            json.dump(default_luts, f, indent=4)
-            print(f"Created default LUT file at {lut_file}")
-    return lut_file
-
-def autoLUT(lut_table, existing_mxf_file_path):
-    # we choose lut only based on trc, not sure if we really need to consider other params, e.g. does HLG with 709 primaries exist?
-    m = aaf2.mxf.MXFFile(existing_mxf_file_path)
-    m.walker = types.MethodType(mxf_deep_search_by_key, m) #extend the MXFFile Class, we need "self" to work in mxf_deep_search_by_key
-    trc = m.walker(search="TransferCharacteristic")
-    if (trc == None):
-        logging.debug("Autolut failed, no trc in " + existing_mxf_file_path)
-    trc = aaf2.mxf.reverse_auid(trc).hex
-    # prim = m.walker(search="ColorPrimaries")
-    # eq = m.walker(search="CodingEquations")
-    work_lut = next(
-        (entry["lut"] for entry in lut_table if entry["trc"] == trc),
-        None
-    )
-    if (work_lut == None):
-        logging.debug("Autolut failed, no matching LUT found for trc" + trc)
-    else:
-        logging.debug("Autolut result: " + work_lut)
-    return work_lut
-
-
-
-def attachLUT(f,existing_mxf_file_path):
-    #ensure color luts file exists
-    global args
-    if args.lut == None: #no userinput no work
-        return
-    
-    #cares about LUT mapping file
-    lut_file = ensureLUTFile()
-    lut_table = {}  
-    with open(lut_file, "r", encoding="utf-8") as _tmp:
-        lut_table = json.load(_tmp)
-    
-    all_packages = f.content.mobs
-    video_sources = [
-        pkg for pkg in all_packages 
-        if isinstance(pkg, aaf2.mobs.SourceMob) and isinstance(pkg.descriptor, aaf2.essence.CDCIDescriptor)
-    ]
-
-    #select lut from userparam from color_luts.json
-    work_lut = None
-    if args.lut == "auto": 
-        try:
-            work_lut = autoLUT(lut_table, existing_mxf_file_path)
-        except:
-            logging.debug("Autolut failed, no trc in " + existing_mxf_file_path)
-            pass
-    else:
-        work_lut = next(
-            (entry["lut"] for entry in lut_table if entry["name"] == work_lut),
-            None
-        )
-
-    if (work_lut == None):
-        print("LUT not found in color_luts.json:",work_lut)
-        return
-    
-    #do the acutal work
-    for src in video_sources:
-        tag = f.create.TaggedValue("_COLOR_INPUT_TRANSFORMATION",  work_lut) 
-        src['MobAttributeList'].append(tag)
-    # if len(video_sources) == 1:
-    #     video_sources[0]['MobAttributeList'].append(tag)
 
 def attach_SRCFILE(f):
     return
@@ -311,7 +223,6 @@ def main():
     #parse arguments
     parser = None
     try:
-        
         parser = argparse.ArgumentParser( epilog="create AAF from OPAtom or AMA_linked from other formats")
         setupParser(parser)
         args = parser.parse_args()
@@ -332,12 +243,30 @@ def main():
             # Truncate (reset) the log file
             open(log_file, "w").close()
         
-        logger = logging.getLogger()  # root logger
+
+        # Root logger
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+
+        # ----- Remove any existing handlers first -----
+        if logger.hasHandlers():
+            logger.handlers.clear()
+
+        # ----- File handler -----
         file_handler = logging.FileHandler(log_file, mode='a')
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        file_handler.setFormatter(formatter)
+        file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(file_formatter)
         logger.addHandler(file_handler)
-        logging.basicConfig(force=True, format="%(asctime)s [%(levelname)s] %(message)s",level=logging.DEBUG,filename=log_file)
+
+        # ----- Console handler -----
+        console_handler = logging.StreamHandler()
+        console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
+
+        # ----- Silence aaf2.cfb if needed -----
+        logging.getLogger("aaf2.cfb").setLevel(logging.WARNING)
+
     else:
         logging.basicConfig(level=logging.INFO)
     #process everything
@@ -378,7 +307,7 @@ def main():
                         f.content.link_external_mxf(_file)
                         logging.debug("Added " + _file)
                 checkResult(os.path.join(args.odir,args.oname))
-        print ("Created file: " + os.path.join(args.odir,args.oname))        
+                print ("Created file: " + os.path.join(args.odir,args.oname))        
         
         
 #todo: check if target file is greater than 111kb

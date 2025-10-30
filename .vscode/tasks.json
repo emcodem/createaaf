@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "set-random",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "$env:RUN_ID = Get-Random"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

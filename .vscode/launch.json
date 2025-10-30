@@ -2,12 +2,29 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "createaaf AMA",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "createaaf.py",
+            "args": [
+                "--odir", "C:\\temp\\1avid\\dnx36",
+                "--oname", "ama.aaf", 
+                "--debug","1",
+                "--skipcheck","1",
+                "--amalink","1",
+                "--lut","auto",
+                "C:\\temp\\1avid\\original\\sony\\"
+                
+            ],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "launch createaaf.py",
             "type": "debugpy",
             "request": "launch",
             "program": "createaaf.py",
             "args": [
-                "--odir", "C:\\temp\\1avid\\dnx36\\",
+                "--odir", "C:\\temp\\1avid\\dnx36",
                 "--oname", "FX6_EO0002_v1_from_createaa.aaf", 
                 "--debug","1",
                 "--skipcheck","1",
@@ -28,14 +45,15 @@
             "console": "integratedTerminal"
         },
          {
+            //"preLaunchTask": "set-random",
             "name": "aaftimelineparser.py",
             "type": "debugpy",
             "request": "launch",
             "program": "aaftimelineparser.py",
             "args": [
-                "-i", "C:\\temp\\1avid\\consolidated\\Untitled Sequence.08.aaf",
-                "-o", "C:\\temp\\1avid\\consolidated",
-                "-bmx", "C:\\temp\\ffastrans_141\\avid_tools\\0.3\\bmx\\bmxtranswrap.exe"
+                "-i", "\\\\DESKTOP-3VMPAN6\\1avid\\consolidated\\1file.aaf",
+                "-o", "\\\\DESKTOP-3VMPAN6\\1avid\\consolidated\\aa_${env:RUN_ID}",
+                "-bmx", "C:\\temp\\ffastrans_141\\avid_tools\\0.4\\bmx\\bmxtranswrap.exe"
             ],
             "console": "integratedTerminal"
         },

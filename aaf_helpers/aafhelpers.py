@@ -5,7 +5,7 @@ from pathlib import Path
 
 #addon modules (portable)
 filename = getframeinfo(currentframe()).filename
-parent = str(Path(filename).resolve().parent)
+parent = str(Path(filename).resolve().parent.parent) # parent.parent = go 1 up to find our own aaf2
 sys.path.append(parent)
 
 import aaf2
