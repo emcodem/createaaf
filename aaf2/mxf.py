@@ -7,6 +7,8 @@ from __future__ import (
 import sys
 import struct
 import datetime
+import os
+import urllib.parse
 
 from io import BytesIO
 import io
@@ -144,9 +146,20 @@ def decode_mob_id(data):
     m = MobID(str(uid1) + str(uid2))
     return m
 
-def ama_path(path):
-    prefix ="file://"
-    return prefix + path
+def ama_path(path: str) -> str:
+    if path.startswith('\\\\'):
+        # UNC path, avid want this with two slashes at the start
+        
+        encoded_path = urllib.parse.quote(path.replace("\\", "/"), safe='/')
+        return f"file:{encoded_path}"
+    elif ':' in path:
+        # Local drive path, for avid we must append three slashes, otherwise it does not detect Source Path and Name correctly in the bin
+        encoded_path = urllib.parse.quote(path.replace("\\", "/"), safe='/')
+        return f"file:///{encoded_path}"
+    else:
+        # fallback for relative paths or non-Windows (untested)
+        encoded_path = urllib.parse.quote(path.replace("\\", "/"), safe='/')
+        return f"file://{encoded_path}"
 
 class MXFObject(object):
     def __init__(self):
