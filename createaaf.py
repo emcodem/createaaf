@@ -24,6 +24,7 @@ import aaf2.mxf
 
 sys.path.append(str(Path.joinpath(Path(parent), "helpers")))
 from helpers import win_argparse
+from helpers import exec_ffprobe
 
 sys.path.append(str(Path.joinpath(Path(parent), "aaf_helpers")))
 from aaf_helpers.avid_lut import attachLUT
@@ -62,7 +63,7 @@ def find_opatom_files(dir):
                 raise Exception("can only link OPAtom mxf files")
         except Exception as e:
             logging.debug(_file + " is not an OPAtom mxf file " )
-            
+            continue
             
         _this_package = {'slotcount' : 0, 'files':[]}
         _last_uid = None
@@ -83,70 +84,114 @@ def process_directory(dir):
     global created_file_count
     global args
 
+    all_files_in_dir = [os.path.join(dir, f) for f in os.listdir(dir)]
+    if args.oname == None:
+        base=os.path.basename(all_files_in_dir[0])
+        args.oname = os.path.splitext(base)[0] + ".aaf"
+        logging.debug("Calculated output filename:" + args.oname )
+
     packages = find_opatom_files(dir)
-    if (args.allinone):
-        first_src = None
-        with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
-            for pack in packages:
-                for _file in packages[pack]['files']:
-                    first_src = first_src or _file
-                    mobs = f.content.link_external_mxf(_file)
-            attachLUT(f,first_src,args.lut)
-            #attach_SRCFILE(f)
-
-        checkResult(os.path.join(args.odir,args.oname))
-        return
+    if (args.amalink != "1"):
+        mxf_files = [f for f in all_files_in_dir if f.lower().endswith(".mxf")]
+        if (len(mxf_files) == 0):
+            logging.debug("No mxf files found in (use ama if you want to link non mxf)" + dir)
+            sys.exit(1)
     
-    #non allinone mode        
-    for pack in packages:
-        if (args.skipcheck != None or packages[pack]['slotcount'] == len(packages[pack]['files'])):
-            if args.odir == None:
-                args.odir = os.path.dirname(packages[pack]['files'][0])
-                logging.debug("Calculated output directory: " + args.odir + " From file: " + packages[pack]['files'][0])
-            if args.oname == None:
-                base=os.path.basename(packages[pack]['files'][0])
-                args.oname = os.path.splitext(base)[0] + ".aaf"
-                logging.debug("Calculated output filename:" + args.oname )
+    if (args.allinone):
+        if (len(packages) != 0):
+            #op-atom files are grouped in packages
+                logging.debug("Mode: OP-Atom allinone non ama")
+                first_src = None
+                with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
+                    for pack in packages:
+                        for _file in packages[pack]['files']:
+                            first_src = first_src or _file
+                            mobs = f.content.link_external_mxf(_file)
+                    attachLUT(f,first_src,args.lut)
+                    #attach_SRCFILE(f)
 
-            if(args.testmode): #just output json, do not write aaf
-                logging.debug("TESTMODE, no aaf is created, output is:")
-                print (packages)
-                continue
-            #create output AAF
-            logging.debug ("Creating " + os.path.join(args.odir,args.oname))
-            
-            sourcefiles = []
-            with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
-                
-                for _file in packages[pack]['files']:
-                    sourcefiles.append(_file)
-                    if (args.allinone):
-                        continue
-                    created_file_count += 1 
-                    mobs = []
-                    if args.amalink:
-                        meta = probe(_file)
-                        mobs = f.content.create_ama_link(_file)#, meta
-                    else:
-                        mobs = f.content.link_external_mxf(_file)
-                    
-                    logging.debug ("Added " + _file)
-
-                #adds descriptive metadata to the aaf, mostly about controlling the avid metadata in the bin
-
-                attachLUT(f,sourcefiles[0])
-                #attach_SRCFILE(f)
-                # if (args.allinone):
-                #     for _file in sourcefiles:
-                #         mobs = f.content.link_external_mxf(_file)
-                #         logprint ("Added Allinone" + _file)
-            checkResult(os.path.join(args.odir,args.oname))
-            
-            print ("Created file: " + os.path.join(args.odir,args.oname))
-            args.oname = None # reset oname for next file            
+                checkResult(os.path.join(args.odir,args.oname))
+                return
         else:
-            logging.debug("Not yet ready for processing, slotcount is " + str(packages[pack]['slotcount']) + " and filecount is " + str(len(packages[pack]['files'])))
-            logging.debug(packages[pack]['files'])
+            #check if all inputs are mxf
+            mxf_files = [f for f in all_files_in_dir if f.lower().endswith(".mxf")]
+            logging.debug("Mode: MXF allinone non ama")
+            with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
+                for _file in all_files_in_dir:
+                    mobs = f.content.link_external_mxf(_file)
+                attachLUT(f,_file,args.lut)
+            checkResult(os.path.join(args.odir,args.oname))
+            logging.info("Wrote: " + os.path.join(args.odir,args.oname))
+            return
+        
+
+    #non allinone mode
+    if (len(packages) != 0 and args.amalink != "1"):
+        logging.debug("Mode: OP-Atom single file non ama")
+        for pack in packages:
+            if (args.skipcheck != None or packages[pack]['slotcount'] == len(packages[pack]['files'])):
+                if args.odir == None:
+                    args.odir = os.path.dirname(packages[pack]['files'][0])
+                    logging.debug("Calculated output directory: " + args.odir + " From file: " + packages[pack]['files'][0])
+
+                if(args.testmode): #just output json, do not write aaf
+                    logging.debug("TESTMODE, no aaf is created, output is:")
+                    print (packages)
+                    continue
+
+                #create output AAF
+                logging.debug ("Creating " + os.path.join(args.odir,args.oname))
+                
+                sourcefiles = []
+                with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
+                    for _file in packages[pack]['files']:
+                        sourcefiles.append(_file)
+                        if (args.allinone):
+                            continue
+                        created_file_count += 1 
+                        mobs = []
+                        if args.amalink:
+                            meta = probe(_file)
+                            mobs = f.content.create_ama_link(_file)#, meta
+                        else:
+                            mobs = f.content.link_external_mxf(_file)
+                        
+                        logging.debug ("Added " + _file)
+
+                    #adds descriptive metadata to the aaf, mostly about controlling the avid metadata in the bin
+                    attachLUT(f,sourcefiles[0])
+                checkResult(os.path.join(args.odir,args.oname))
+                print ("Created file: " + os.path.join(args.odir,args.oname))
+                args.oname = None # reset oname for next file            
+            else:
+                logging.debug("Not yet ready for processing, slotcount is " + str(packages[pack]['slotcount']) + " and filecount is " + str(len(packages[pack]['files'])))
+                logging.debug(packages[pack]['files'])
+    else:
+        #non allinone mode, non opatom
+        logging.debug("Mode: single files, non op-atom, ama: %s", args.amalink)
+        mxf_files = [f for f in all_files_in_dir if f.lower().endswith(".mxf")]
+        if (len(mxf_files) == 0 and args.amalink != "1"):
+            logging.debug("No mxf files found in (use ama if you want to link non mxf)" + dir)
+            sys.exit(1)
+
+        for _file in all_files_in_dir:
+            probe = ""    
+            if not str(_file).lower().endswith(".mxf"):
+                try:
+                    probe = exec_ffprobe.get_ffprobe_info(_file)
+                except:
+                    logging.warning("FFprobe failed for file: " + _file)
+                    continue
+            with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
+                linkfunc = f.content.link_external_mxf
+                if (args.amalink == "1"):
+                    linkfunc = f.content.create_ama_link
+                
+
+                mobs = linkfunc(_file,probe)
+                attachLUT(f,_file,args.lut)
+                logging.debug ("Created " + (os.path.join(args.odir,args.oname)))
+        
     sys.exit(0)
 
 

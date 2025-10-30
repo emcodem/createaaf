@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+import json
 
 def find_ffprobe():
     """
@@ -29,6 +30,15 @@ def get_ffprobe_info(video_file):
     """
     Runs ffprobe on the given video file and returns the output.
     """
+    cmd = ["ffprobe", '-of','json','-show_format','-show_streams', video_file]
+
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout,stderr = p.communicate()
+    if p.returncode != 0:
+        raise subprocess.CalledProcessError(p.returncode, subprocess.list2cmdline(cmd), stderr)
+
+    return json.loads(stdout.decode('utf8'))
+
     ffprobe_path = find_ffprobe()
     try:
         result = subprocess.run(

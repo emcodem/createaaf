@@ -13,7 +13,7 @@
                 "--skipcheck","1",
                 "--amalink","1",
                 "--lut","auto",
-                "C:\\temp\\1avid\\original\\sony\\"
+                "C:\\temp\\1avid\\original\\dji\\"
                 
             ],
             "console": "integratedTerminal"
