@@ -585,6 +585,8 @@ class MXFMultipleDescriptor(MXFDescriptor):
     def link(self):
         d = self.create_aaf_instance()
         for item in self.iter_strong_refs("FileDescriptors"):
+            if item == None:
+                continue #might be missing referenced audio
             # if isinstance(item, MXFAES3AudioDescriptor):
             #     continue
             d['FileDescriptors'].append(item.link())
