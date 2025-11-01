@@ -70,8 +70,8 @@ class ContentStorage(core.AAFObject):
 
     def link_external_mxf(self, path):
         m = mxf.MXFFile(path)
-        if m.operation_pattern != "OPAtom":
-            raise Exception("can only link OPAtom mxf files")
+        # if m.operation_pattern != "OPAtom":
+        #     raise Exception("can only link OPAtom mxf files")
         return m.link(self.root)
 
     def link_external_wav(self, metadata):
