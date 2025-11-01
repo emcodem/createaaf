@@ -377,6 +377,7 @@ def execute_bmx(bmx_cmds: List[BMXCmd]):
         return all_outputs
 
 def write_output_aaf(all_outputs):
+        return #not used atm. avid showed the files offline until bin was closed and re-opened
         filename_no_ext = Path(args.input).stem
         out_aaf_path = os.path.join(args.output, filename_no_ext + "_consolidated.aaf")
         logging.info("Output aaf: %s", out_aaf_path)
@@ -477,8 +478,8 @@ def main():
     all_output_files = execute_bmx(bmx_cmds)
 
     if (len(copy_clips) > 0):
-        copy_files_parallel(copy_clips,args.output)
-        all_output_files.extend(copy_clips)
+        copied_targets = copy_files_parallel(copy_clips,args.output)
+        all_output_files.extend(copied_targets)
 
     write_output_aaf(all_output_files)
 

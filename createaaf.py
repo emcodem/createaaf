@@ -140,6 +140,9 @@ def process_directory(dir):
                     continue
 
                 #create output AAF
+                if (args.oname == None):
+                    base=os.path.basename(packages[pack]['files'][0])
+                    args.oname = os.path.splitext(base)[0] + ".aaf"
                 logging.debug ("Creating " + os.path.join(args.odir,args.oname))
                 
                 sourcefiles = []
@@ -183,12 +186,12 @@ def process_directory(dir):
                     logging.warning("FFprobe failed for file: " + _file)
                     continue
             with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
-                linkfunc = f.content.link_external_mxf
-                if (args.amalink == "1"):
-                    linkfunc = f.content.create_ama_link
                 
-
-                mobs = linkfunc(_file,probe)
+                if (args.amalink == "1"):
+                    f.content.create_ama_link(_file,probe)
+                else:
+                    f.content.link_external_mxf(_file)
+                
                 attachLUT(f,_file,args.lut)
                 logging.debug ("Created " + (os.path.join(args.odir,args.oname)))
         
