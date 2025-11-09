@@ -787,7 +787,7 @@ class TypeDefExtEnum(TypeDef):
             else:
                 if value.lower() == data.lower():
                     return key.bytes_le
-        print(f"warning: unknown ext enum value. We try on and forward this value from mxf to aaf without knowing what it is: {str(data)} (type: {self.type_name})")
+        #print(f"warning: unknown ext enum value. We try on and forward this value from mxf to aaf without knowing what it is: {str(data)} (type: {self.type_name})")
         return data.bytes_le #emcodem huble try to support even unknown colorpsaces and transfercharacteristics
         #raise ValueError("invalid ext enum value: %s" % str(data)) #emcodem: originally this was here but its not very helpful to throw, better go on with original value
 

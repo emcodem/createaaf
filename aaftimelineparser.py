@@ -255,7 +255,7 @@ def _resolve_media(path,trackname,searchpaths = []):
 
     #try to find trackname in previously parsed locators from proxy mxf
     for _spath in searchpaths:
-        if _spath.lower().endswith((f"{trackname.lower()}.mxf", f"{trackname.lower()}.mp4")):
+        if _spath.lower().endswith((f"{trackname.lower()}.mxf", f"{trackname.lower()}.mp4", f"{trackname.lower()}")):
             logging.debug(f"Found {trackname} in Path analyzed from proxy mxf: {_spath}")
             return _spath
 
@@ -451,6 +451,10 @@ def main():
                 continue
             if isinstance(item, otio.schema.Clip):
                 sr = item.source_range
+                # we hacked the original_file_name into the metadata in advanced_authoring_format.py, no clue if we could determine audio/video files from it
+                if (item.metadata.get("AAF", {}).get("original_file_name")):
+                    item.name = item.metadata["AAF"]["original_file_name"]
+                    logging.debug(f"Using original_file_name: {item.name}")
                 _path = _resolve_media(args.source,item.name,searchpaths)
                 if (_path == item.name):
                     raise Exception("Could not find media for Clip " + item.name)

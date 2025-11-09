@@ -19,19 +19,27 @@
             "console": "integratedTerminal"
         },
         {
+            
             "name": "createaaf.py",
             "type": "debugpy",
             "request": "launch",
             "program": "createaaf.py",
-            "args": [
-                "--odir", "C:\\Users\\Public\\Documents\\Avid Media Composer\\Avid MediaFiles\\MXF\\1",
-                "--oname", "avc.aaf", 
-                "--debug","1",
-                "--skipcheck","1",
-                "--lut","auto",
-                "--allinone","1",
-                "C:\\Users\\Public\\Documents\\Avid Media Composer\\Avid MediaFiles\\MXF\\1"
-                
+            "args":  [
+                "--odir",
+                "\\\\DESKTOP-3VMPAN6\\1avid\\dnx36\\2025_11_06",
+                "--oname",
+                "SONY_CARD_NAME_1234_25_11_08_11_16_54.aaf",
+                "--lut",
+                "auto",
+                "--skipcheck",
+                "1",
+                "--allinone",
+                "1",
+                "--debug",
+                "1",
+                "--report",
+                "c:\\.ffastrans_work_root\\20251107-2152-4378-5fc6-d2e21c11202d\\20251108-1116-2330-9c44-9d20c9af420f\\report.json",
+                "\\\\localhost\\c$\\Users\\Public\\Documents\\Avid Media Composer\\Avid MediaFiles\\MXF\\1"
             ],
             "console": "integratedTerminal"
         },
@@ -47,15 +55,23 @@
         },
          {
             //"preLaunchTask": "set-random",
+            "justMyCode": false,
             "name": "aaftimelineparser.py",
             "type": "debugpy",
             "request": "launch",
             "program": "aaftimelineparser.py",
             "args": [
-                "-i", "\\\\DESKTOP-3VMPAN6\\1avid\\consolidated\\1file.aaf",
-                "-o", "\\\\DESKTOP-3VMPAN6\\1avid\\consolidated\\aa_${env:RUN_ID}",
-                "-bmx", "C:\\temp\\ffastrans_141\\avid_tools\\0.4\\bmx\\bmxtranswrap.exe"
-            ],
+                    "-i",
+                    "\\\\DESKTOP-3VMPAN6\\1avid\\consolidated\\drone.aaf",
+                    "-o",
+                    "C:\\\\temp\\\\1avid\\\\consolidated\\\\drone_2025_11_07_15400",
+                    "-s",
+                    "\\\\DESKTOP-3VMPAN6\\1avid\\consolidated",
+                    "-b",
+                    "C:\\\\FFAStrans-Public-1.4.2\\\\avid_tools\\\\0.6\\\\bmx\\\\bmxtranswrap.exe",
+                    "-ha",
+                    "50"
+                ],
             "console": "integratedTerminal"
         },
       

@@ -25,6 +25,7 @@ import aaf2.mxf
 sys.path.append(str(Path.joinpath(Path(parent), "helpers")))
 from helpers import win_argparse
 from helpers import exec_ffprobe
+from helpers import mxf_helpers
 
 sys.path.append(str(Path.joinpath(Path(parent), "aaf_helpers")))
 from aaf_helpers.avid_lut import attachLUT
@@ -104,9 +105,14 @@ def process_directory(dir):
                 first_src = None
                 with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
                     for pack in packages:
+                        # todo: checkreport actually parses the mxf (inefficient), we could also use filtering by filenames from report to limit the number of parsed files
+                        original_mxf = reportContainsFile(packages[pack]['files'][0])
+                        if not original_mxf:
+                            continue
                         for _file in packages[pack]['files']:
                             first_src = first_src or _file
                             mobs = f.content.link_external_mxf(_file)
+                        updateReport(original_mxf,packages[pack]['files'][0])
                     attachLUT(f,first_src,args.lut)
                     #attach_SRCFILE(f)
 
@@ -124,7 +130,6 @@ def process_directory(dir):
             logging.info("Wrote: " + os.path.join(args.odir,args.oname))
             return
         
-
     #non allinone mode
     if (len(packages) != 0 and args.amalink != "1"):
         logging.debug("Mode: OP-Atom single file non ama")
@@ -148,6 +153,7 @@ def process_directory(dir):
                 sourcefiles = []
                 with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
                     for _file in packages[pack]['files']:
+                        
                         sourcefiles.append(_file)
                         if (args.allinone):
                             continue
@@ -197,30 +203,56 @@ def process_directory(dir):
         
     sys.exit(0)
 
+def updateReport(mxf_path, created_file):
+    # finds the entry in report where original_file matches the mxf_path and adds created_file entry
+    global args
+    if args.report == None:
+        return
+    
+    # Read the current report data
+    with open(args.report, 'r') as report_file:
+        report_data = json.load(report_file)
+    
+    # Find and update the matching entry
+    for entry in report_data:
+        if 'original_file' in entry:
+            #in the mxf locator, the url is stored and parsed using url rules. The Servername is defined as must lowercase, so we lower everything for comparison
+            if os.path.normpath(entry['original_file']).lower() == os.path.normpath(mxf_path).lower():
+                logging.debug("Attaching created_file to report for original_file: " + mxf_path)
+                entry['created_file'] = created_file
+                
+                # Write the updated data back to the file
+                with open(args.report, 'w') as report_file_out:
+                    logging.debug("Writing updated report data to: " + args.report)
+                    json.dump(report_data, report_file_out, indent=4)
+                break
 
-def attach_SRCFILE(f):
-    return
-    all_packages = f.content.mobs
-    dict_ = f.dictionary
-    materialpackage = [
-        pkg for pkg in all_packages 
-        if isinstance(pkg, aaf2.mobs.MasterMob) 
-    ]
-    #https://github.com/markreidvfx/pyaaf2/issues/51
-    #n =  f.create.NetworkLocator()
-    #n['URLString'].value = ("file://blabla/bla.mxf")
-    tag = f.create.TaggedValue("_SRCFILE",  "file:///C%3A/temp/1avid/FX6_EO0002.MXF") #think this is 16bit color value
-    materialpackage[0]['MobAttributeList'].append(tag)
-    # tag = f.create.TaggedValue("ama_path_HARRY",  n, aaf2.types["NetworkLocator"]) #think this is 16bit color value
-    # if len(materialpackage) == 1:
-    #     materialpackage[0]['MobAttributeList'].append(tag)
-    # portable_obj = dict_.create.ClassDefinition('ConstantValue')
-    # portable_inst = portable_obj()
-    # portable_inst['Value'].value = 42  # set some value        
+def reportContainsFile(file_path):
+    # check if the original files (from mxf "locator" entry) path is contained in the report json 
+    global args
+    if args.report == None:
+        return file_path
+    report_data = None
+    with open(args.report, 'r') as report_file:
+        report_data = json.load(report_file)
+    found_paths = mxf_helpers.parseLocatorFromMXF(file_path)
+    for path_from_mxf_locator in found_paths:
+        for entry in report_data:
+            if 'original_file' in entry:
+                #in the mxf locator, the url is stored and parsed using url rules. The Servername is defined as must lowercase, so we lower everything for comparison
+                if os.path.normpath(entry['original_file']).lower() == os.path.normpath(path_from_mxf_locator).lower():
+                    logging.debug("Found matching original_file in report for path: " + path_from_mxf_locator)
+                    return entry['original_file']
+    logging.debug("No matching original_file in report: " + found_paths[0])
+    return False
     
 def checkResult(_filename):
     try:
+    
+    # Parse the MXF locator for paths
         size = os.path.getsize(_filename)
+    
+    # Iterate over the report entries and check if any match the found paths
         if (size < 400000):
             raise Exception("Created file [" +_filename+ "] does not have minimum file size of 400kb")
     except Exception as e:
@@ -229,6 +261,7 @@ def checkResult(_filename):
         
 def probe(path, show_packets=False):
     p = subprocess.Popen("ffprobe", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return None
     stdout,stderr = p.communicate()
     if ("ffprobe" not in str(stderr)):
         raise Exception("ffprobe not found")
@@ -258,6 +291,7 @@ def setupParser(parser):
     parser.add_argument('--skipcheck', help='Prevent checking if there are as many source files as slots found in the op-atom')
     parser.add_argument('--amalink', help='Create AMA linked aaf (needs ffprobe in PATH)')
     parser.add_argument('--allinone', help='Add all source files to a single aaf, cannot work for ama')
+    parser.add_argument('--report', help='Only for "non AMA, non allinone" mode. A report file that already contains a list of files to be processed, format: [{"original_file": "C:\\file1.mp4"}]. In this case, we will only create output files that contain a link to original. Also we enrich the json with the created files')
     parser.add_argument('files', metavar='FILES OR FOLDERS', type=str, nargs='+',
                         help='files to add to package (or folder to scan for files)')
     parser.add_argument('--odir', 
