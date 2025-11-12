@@ -1,6 +1,14 @@
 [
     {
+        "name": "Sony XML Values Mapping",
+        "trc_s-log3-cine": "060e2b34040101060e06040101010605",
+        "prim_s-gamut3-cine": "060e2b34040101060e06040101030105",
+        "ceq_rec709": "060e2b34040101010401010102020000",
+        "description": "Mapping of Sony XML values to MXF ULs"
+    },
+    {
         "name": "slog3_to_709",
+        "sony_xml_values": "s-log3-cine,s-gamut3-cine,rec709",
         "trc": "060e2b34040101060e06040101010605",
         "lut": "<ColorTransformationList><Name>From S-Log3 / S-Gamut3.Cine to Rec.709</Name><ColorTransformation><ExternalLut><Name>Sony_S3C 1. SLog3-SG3.Cine to LC-709</Name><LutFileName>SLog3SGamut3.CineToLC-709 (video levels).cube</LutFileName><LutFileFormat>iridas</LutFileFormat><LutDimension>3D</LutDimension></ExternalLut></ColorTransformation></ColorTransformationList>"
     },

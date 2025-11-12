@@ -5,6 +5,7 @@
             "name": "createaaf AMA",
             "type": "debugpy",
             "request": "launch",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\python_portable\\python.exe",
             "program": "createaaf.py",
             "args": [
                 "--odir", "C:\\temp\\1avid\\dnx36",
@@ -23,12 +24,13 @@
             "name": "createaaf.py",
             "type": "debugpy",
             "request": "launch",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\python_portable\\python.exe",
             "program": "createaaf.py",
             "args":  [
                 "--odir",
-                "\\\\DESKTOP-3VMPAN6\\1avid\\dnx36\\2025_11_06",
+                "\\\\localhost\\c$\\temp\\1avid\\dnx36",
                 "--oname",
-                "SONY_CARD_NAME_1234_25_11_08_11_16_54.aaf",
+                "FX6_EO0002__25_11_11_22_39_16.aaf",
                 "--lut",
                 "auto",
                 "--skipcheck",
@@ -38,7 +40,7 @@
                 "--debug",
                 "1",
                 "--report",
-                "c:\\.ffastrans_work_root\\20251107-2152-4378-5fc6-d2e21c11202d\\20251108-1116-2330-9c44-9d20c9af420f\\report.json",
+                "\\\\DESKTOP-3VMPAN6\\1avid\\dnx36\\2025_11_06\\TCN_250421_FX9_AD_05_report.json",
                 "\\\\localhost\\c$\\Users\\Public\\Documents\\Avid Media Composer\\Avid MediaFiles\\MXF\\1"
             ],
             "console": "integratedTerminal"
@@ -47,9 +49,10 @@
             "name": "analyze_colors.py",
             "type": "debugpy",
             "request": "launch",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\python_portable\\python.exe",
             "program": "analyze_mxf_colors.py",
             "args": [
-                "C:\\temp\\1avid\\original\\FX6_EO0002.mxf",
+                "\\\\DESKTOP-3VMPAN6\\temp\\bearded\\zzzNew_Job_Template - 2025\\01_Rushes\\SONY\\2025_11_06\\SONY_CARD_NAME_1234\\XDROOT\\Clips\\sonyfx6.mxf"
             ],
             "console": "integratedTerminal"
         },
@@ -59,16 +62,20 @@
             "name": "aaftimelineparser.py",
             "type": "debugpy",
             "request": "launch",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\python_portable\\python.exe",
             "program": "aaftimelineparser.py",
             "args": [
+                "--output-json","c:\\temp\\json.json",
                     "-i",
-                    "\\\\DESKTOP-3VMPAN6\\1avid\\consolidated\\drone.aaf",
+                    "\\\\DESKTOP-3VMPAN6\\1avid\\consolidated\\Untitled Sequence.01.aaf",
                     "-o",
-                    "C:\\\\temp\\\\1avid\\\\consolidated\\\\drone_2025_11_07_15400",
+                    "C:\\temp\\1avid\\consolidated\\Untitled Sequence.01",
                     "-s",
                     "\\\\DESKTOP-3VMPAN6\\1avid\\consolidated",
                     "-b",
-                    "C:\\\\FFAStrans-Public-1.4.2\\\\avid_tools\\\\0.6\\\\bmx\\\\bmxtranswrap.exe",
+                    "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\bmx\\bmxtranswrap.exe",
+                    "--ffmpeg",
+                    "C:\\FFAStrans-Public-1.4.2\\processors\\FFMpeg\\x64\\ffmpeg.exe",
                     "-ha",
                     "50"
                 ],

@@ -113,8 +113,8 @@ def process_directory(dir):
                             first_src = first_src or _file
                             mobs = f.content.link_external_mxf(_file)
                         updateReport(original_mxf,packages[pack]['files'][0])
-                    attachLUT(f,first_src,args.lut)
-                    #attach_SRCFILE(f)
+                    attachLUT(f,first_src,args.lut) #todo: colors could vary for each file in package, why do we attach the lut "globally" in the source package?
+                    finalizeReport()
 
                 checkResult(os.path.join(args.odir,args.oname))
                 return
@@ -203,6 +203,44 @@ def process_directory(dir):
         
     sys.exit(0)
 
+def finalizeReport():
+    # checks if all "original_file" entries in the report have a "created_file" entry, if yes delete the report, if not rename it with _error suffix
+    global args
+    if args.report == None:
+        return
+
+    with open(args.report, 'r') as report_file:
+        report_data = json.load(report_file)
+    
+    total_count = len(report_data)
+    success_count = sum(1 for entry in report_data if 'created_file' in entry)
+    
+    # If all entries have created_file, delete the report
+    if success_count == total_count:
+        logging.info(f"All {total_count} entries processed successfully, deleting report file")
+        os.remove(args.report)
+    else:
+        # Collect missing files
+        missing_files = [entry['original_file'] for entry in report_data 
+                        if 'original_file' in entry and 'created_file' not in entry]
+        
+        # Insert missing list at the beginning
+        report_with_missing = [{"missing": missing_files,
+                                "error_instructions": "Errors can only be checked manually. Check the job logs for more information."
+                                }] + report_data
+        
+
+        
+        # Rename report file with _error suffix
+        report_path = Path(args.report)
+        error_report_path = report_path.parent / f"{report_path.stem}_ERROR{report_path.suffix}"
+                # Write updated report with missing files
+        with open(args.report, 'w') as report_file_out:
+            json.dump(report_with_missing, report_file_out, indent=4)
+        os.rename(args.report, error_report_path)
+        logging.warning(f"Only {success_count}/{total_count} entries processed, renaming report to {error_report_path}")
+        
+
 def updateReport(mxf_path, created_file):
     # finds the entry in report where original_file matches the mxf_path and adds created_file entry
     global args
@@ -219,7 +257,7 @@ def updateReport(mxf_path, created_file):
             #in the mxf locator, the url is stored and parsed using url rules. The Servername is defined as must lowercase, so we lower everything for comparison
             if os.path.normpath(entry['original_file']).lower() == os.path.normpath(mxf_path).lower():
                 logging.debug("Attaching created_file to report for original_file: " + mxf_path)
-                entry['created_file'] = created_file
+                #entry['created_file'] = created_file
                 
                 # Write the updated data back to the file
                 with open(args.report, 'w') as report_file_out:
@@ -291,7 +329,7 @@ def setupParser(parser):
     parser.add_argument('--skipcheck', help='Prevent checking if there are as many source files as slots found in the op-atom')
     parser.add_argument('--amalink', help='Create AMA linked aaf (needs ffprobe in PATH)')
     parser.add_argument('--allinone', help='Add all source files to a single aaf, cannot work for ama')
-    parser.add_argument('--report', help='Only for "non AMA, non allinone" mode. A report file that already contains a list of files to be processed, format: [{"original_file": "C:\\file1.mp4"}]. In this case, we will only create output files that contain a link to original. Also we enrich the json with the created files')
+    parser.add_argument('--report', help='Only for "op-atom, allinone, folder input" mode. An existing report file that already contains a list of files to be processed, format: [{"original_file": "C:\\file1.mp4"}]. Only . If all files are created successfully, the report file is deleted, if not it stays and serves as indicator for errors ')
     parser.add_argument('files', metavar='FILES OR FOLDERS', type=str, nargs='+',
                         help='files to add to package (or folder to scan for files)')
     parser.add_argument('--odir', 
