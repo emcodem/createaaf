@@ -113,6 +113,12 @@ def process_directory(dir):
                             first_src = first_src or _file
                             mobs = f.content.link_external_mxf(_file)
                         updateReport(original_mxf,packages[pack]['files'][0])
+                    if not first_src:
+                        logging.error("Did not find any original source file in any op-atom package.")
+                        sys.exit(1)
+                    if not os.path.exists(first_src):
+                        logging.error(f"The File does not exist: [{first_src}]")
+                        sys.exit(1)
                     attachLUT(f,first_src,args.lut) #todo: colors could vary for each file in package, why do we attach the lut "globally" in the source package?
                     finalizeReport()
 
@@ -237,8 +243,9 @@ def finalizeReport():
                 # Write updated report with missing files
         with open(args.report, 'w') as report_file_out:
             json.dump(report_with_missing, report_file_out, indent=4)
-        os.rename(args.report, error_report_path)
+        
         logging.warning(f"Only {success_count}/{total_count} entries processed, renaming report to {error_report_path}")
+        #os.rename(args.report, error_report_path) #TODO: uncomment
         
 
 def updateReport(mxf_path, created_file):
@@ -257,7 +264,7 @@ def updateReport(mxf_path, created_file):
             #in the mxf locator, the url is stored and parsed using url rules. The Servername is defined as must lowercase, so we lower everything for comparison
             if os.path.normpath(entry['original_file']).lower() == os.path.normpath(mxf_path).lower():
                 logging.debug("Attaching created_file to report for original_file: " + mxf_path)
-                #entry['created_file'] = created_file
+                entry['created_file'] = created_file
                 
                 # Write the updated data back to the file
                 with open(args.report, 'w') as report_file_out:
@@ -278,6 +285,9 @@ def reportContainsFile(file_path):
         for entry in report_data:
             if 'original_file' in entry:
                 #in the mxf locator, the url is stored and parsed using url rules. The Servername is defined as must lowercase, so we lower everything for comparison
+                if 'transcoded_file' in entry and os.path.normpath(entry['transcoded_file']).lower() == os.path.normpath(path_from_mxf_locator).lower():
+                    logging.debug("Found matching transcoded_file in report for path: " + path_from_mxf_locator)
+                    return entry['transcoded_file']
                 if os.path.normpath(entry['original_file']).lower() == os.path.normpath(path_from_mxf_locator).lower():
                     logging.debug("Found matching original_file in report for path: " + path_from_mxf_locator)
                     return entry['original_file']

@@ -30,7 +30,7 @@
                 "--odir",
                 "\\\\localhost\\c$\\temp\\1avid\\dnx36",
                 "--oname",
-                "FX6_EO0002__25_11_11_22_39_16.aaf",
+                "C002C025_250220UJ_CAM0C_25_11_20_18_19_45.aaf",
                 "--lut",
                 "auto",
                 "--skipcheck",
@@ -40,7 +40,7 @@
                 "--debug",
                 "1",
                 "--report",
-                "\\\\DESKTOP-3VMPAN6\\1avid\\dnx36\\2025_11_06\\TCN_250421_FX9_AD_05_report.json",
+                "c:\\.ffastrans_work_root\\20251108-2052-1155-69c5-6032a66254dd\\20251120-1819-2719-256c-7e708f6b4946\\report.json",
                 "\\\\localhost\\c$\\Users\\Public\\Documents\\Avid Media Composer\\Avid MediaFiles\\MXF\\1"
             ],
             "console": "integratedTerminal"
@@ -65,20 +65,21 @@
             "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\python_portable\\python.exe",
             "program": "aaftimelineparser.py",
             "args": [
-                "--output-json","c:\\temp\\json.json",
-                    "-i",
-                    "\\\\DESKTOP-3VMPAN6\\1avid\\consolidated\\Untitled Sequence.01.aaf",
-                    "-o",
-                    "C:\\temp\\1avid\\consolidated\\Untitled Sequence.01",
-                    "-s",
-                    "\\\\DESKTOP-3VMPAN6\\1avid\\consolidated",
-                    "-b",
-                    "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\bmx\\bmxtranswrap.exe",
-                    "--ffmpeg",
-                    "C:\\FFAStrans-Public-1.4.2\\processors\\FFMpeg\\x64\\ffmpeg.exe",
-                    "-ha",
-                    "50"
-                ],
+                "-i",
+                "C:\\temp\\1avid\\consolidated\\2997Timeline, 25pUHD_20s_in.aaf",
+                "-o",
+                "C:\\temp\\1avid\\consolidated\\2997Timeline, 25pUHD_20s_in_2025_11_19_28907",
+                "-s",
+                "C:\\temp\\1avid\\consolidated",
+                "-b",
+                "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\bmx\\bmxtranswrap.exe",
+                "--ffmpeg",
+                "C:\\FFAStrans-Public-1.4.2\\processors\\FFMpeg\\x64\\ffmpeg.exe",
+                "-ha",
+                "1",
+                "--output-json",
+                "c:\\.ffastrans_work_root\\20251108-2052-1155-69c5-6032a66254dd\\20251119-2328-2637-0528-8969a6fdf540\\consolidate.json"
+            ],
             "console": "integratedTerminal"
         },
       

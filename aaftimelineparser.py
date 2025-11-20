@@ -535,8 +535,19 @@ def main():
                     real_rate = get_source_rate(_path)
                     my_start_time = sr.start_time.value / real_rate
                     my_duration = sr.duration.value / real_rate
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    #this is for most recent otio pyaaf adapter where we calculate with the real timecode not zero tc
+                    #my_start_time = sr.start_time.to_seconds() - item.media_reference.available_range.start_time.to_seconds()
+                    #y_duration = sr.duration.to_seconds()
+                    
                     #sr.start_time.rate = real_rate
-                    #sr.duration.rate = real_rate
+                    #sr.duration.rate   = real_rate
                     logging.debug(f"    Source range: start={my_start_time}, duration={my_duration}")
                     main_clip_list.append(
                         #bmx wants edit units

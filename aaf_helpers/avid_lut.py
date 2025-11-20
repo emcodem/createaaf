@@ -109,7 +109,7 @@ def autoLUT(lut_table: dict, existing_mxf_file_path: str):
     m.walker = types.MethodType(mxf_deep_search_by_key, m) #extend the MXFFile Class, we need "self" to work in mxf_deep_search_by_key
     trc = m.walker(search="TransferCharacteristic")
     if (trc == None):
-        logging.debug("Autolut failed, no trc in " + existing_mxf_file_path)
+        logging.error("Autolut failed, no trc in " + existing_mxf_file_path)
     trc = aaf2.mxf.reverse_auid(trc).hex
     #prim = m.walker(search="ColorPrimaries") # we dont consider prim and eq currently for getting the lut
     #eq = m.walker(search="CodingEquations")
