@@ -3,9 +3,9 @@
     "configurations": [
         {
             "name": "createaaf AMA",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
-//            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.8\\python_portable\\python.exe",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9\\python_portable\\python.exe",
             "program": "${workspaceFolder}/createaaf.py",
             "args": [
                 "--odir", "C:\\temp\\1avid\\dnx36",
@@ -22,28 +22,34 @@
         {
             
             "name": "createaaf.py",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
- //           "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.8\\python_portable\\python.exe",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9\\python_portable\\python.exe",
             "program": "${workspaceFolder}/createaaf.py",
             "args":  [
-                    "--odir", "\\\\localhost\\c$\\temp\\1avid\\dnx36",
-                    "--oname", "FX6_EO0002__25_11_27_18_18_31.aaf",
-                    "--lut", "auto",
-                    "--skipcheck", "1",
-                    "--allinone", "1",
-                    "--debug", "1",
-                    "--report", "\\\\localhost\\c$\\temp\\1avid\\dnx36\\report_FX6_EO0002_.json",
-                    "\\\\localhost\\c$\\Users\\Public\\Documents\\Avid Media Composer\\Avid MediaFiles\\MXF\\1"
-
+                "--odir",
+                "\\\\DESKTOP-3VMPAN6\\1avid\\dnx36\\2025_11_06",
+                "--oname",
+                "TCN_250421_FX9_AD_05_25_11_27_22_03_10.aaf",
+                "--lut",
+                "auto",
+                "--skipcheck",
+                "1",
+                "--allinone",
+                "1",
+                "--debug",
+                "1",
+                "--report",
+                "\\\\DESKTOP-3VMPAN6\\1avid\\dnx36\\report_SONY_CARD_NAME_1234.json",
+                "\\\\localhost\\c$\\Users\\Public\\Documents\\Avid Media Composer\\Avid MediaFiles\\MXF\\1"
             ],
             "console": "integratedTerminal"
         },
-          {
+        {
             "name": "analyze_colors.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.8\\python_portable\\python.exe",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9\\python_portable\\python.exe",
             "program": "analyze_mxf_colors.py",
             "args": [
                 "\\\\DESKTOP-3VMPAN6\\temp\\bearded\\zzzNew_Job_Template - 2025\\01_Rushes\\SONY\\2025_11_06\\SONY_CARD_NAME_1234\\XDROOT\\Clips\\sonyfx6.mxf"
@@ -56,7 +62,7 @@
             "name": "aaftimelineparser.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.8\\python_portable\\python.exe",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9\\python_portable\\python.exe",
             "program": "aaftimelineparser.py",
             "args": [
                 "-i",

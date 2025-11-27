@@ -1,5 +1,6 @@
 import sys
 import os
+import traceback
 from inspect import currentframe, getframeinfo
 from pathlib import Path
 
@@ -111,20 +112,19 @@ def autoLUT(lut_table: dict, existing_mxf_file_path: str):
     if (trc == None):
         logging.error("Autolut failed, no trc in " + existing_mxf_file_path)
     trc = aaf2.mxf.reverse_auid(trc).hex
-    #prim = m.walker(search="ColorPrimaries") # we dont consider prim and eq currently for getting the lut
-    #eq = m.walker(search="CodingEquations")
+    logging.debug(f"Found trc in mxf: {existing_mxf_file_path}: {trc}")
+
     work_lut = [entry for entry in lut_table if entry.get("trc") == trc]
     if len(work_lut) > 0:
         work_lut = work_lut[0].get("lut")
-    if (work_lut == None):
-        logging.debug("Autolut failed, no matching LUT found for trc" + trc)
     else:
-        logging.debug("Autolut result: " + work_lut)
+        logging.debug("Autolut failed, no matching LUT found for trc: " + trc)
+
     return work_lut
 
 
 
-def attachLUT(f: aaf2.file.AAFFile, existing_mxf_file_path: str, lut_select: str = "auto"):
+def attachLUT(f: aaf2.file.AAFFile, existing_mxf_file_path: str, lut_select: str = "auto", target_mob: aaf2.mobs.SourceMob = None):
     # search the aaf for the sourcepackage that matches the existing_mxf_files path
     # analyze the existing mxf to get out colors
     # find the color mapping in color_luts.json (transferchar) and adds a taggedvalue to the sourcepackage
@@ -140,37 +140,14 @@ def attachLUT(f: aaf2.file.AAFFile, existing_mxf_file_path: str, lut_select: str
     with open(lut_file, "r", encoding="utf-8") as _tmp:
         lut_table = json.load(_tmp)
     
-    all_packages = f.content.mobs
-    
-    video_sources = []
-    for pkg in all_packages:
-        
-        if isinstance(pkg, aaf2.mobs.SourceMob):
-            if isinstance(pkg.descriptor, aaf2.essence.CDCIDescriptor):
-                # this seems to be the structure of a "non ama" mxf
-                video_sources.append(pkg)
-                
-                #TODO Filter by mxf path match networklocator_path
-
-            if isinstance(pkg.descriptor, aaf2.essence.MultipleDescriptor):
-                networklocator_path = next(iter(pkg.descriptor.locator[0].property_entries.values())).value
-                video_sources.append(pkg)
-                #TODO Filter by mxf path match networklocator_path
-
-                # this seems to be the structure of an ama mxf
-                # video_sources = [
-                #                     obj for obj in pkg.descriptor["FileDescriptors"].objects.values()
-                #                     if isinstance(obj, aaf2.essence.CDCIDescriptor)
-                #                 ]   
-
-
     #select lut from userparam from color_luts.json
     work_lut = None
     if lut_select == "auto": 
         try:
             work_lut = autoLUT(lut_table, existing_mxf_file_path)
         except:
-            logging.debug("Autolut failed, no trc in " + existing_mxf_file_path)
+            logging.debug("unexpected error in Autolut for " + existing_mxf_file_path)
+            logging.debug(traceback.format_exc())
             pass
     else:
         work_lut = next(
@@ -178,13 +155,31 @@ def attachLUT(f: aaf2.file.AAFFile, existing_mxf_file_path: str, lut_select: str
             None
         )
 
-    if (work_lut == None):
-        print("LUT not found in color_luts.json:",work_lut)
+    if (work_lut == None or len(work_lut) == 0):
         return
     
-    #do the acutal work
-    for src in video_sources:
+    #if video mob was provided, just attach the lut there
+    if target_mob is not None:
+        logging.debug(f"Attaching LUT: {work_lut}")
         tag = f.create.TaggedValue("_COLOR_INPUT_TRANSFORMATION",  work_lut) 
-        src['MobAttributeList'].append(tag)
-    # if len(video_sources) == 1:
-    #     video_sources[0]['MobAttributeList'].append(tag)
+        target_mob['MobAttributeList'].append(tag)
+        return
+    else:
+        #if no mob was provided, attach the lut to all found video essences
+        all_packages = f.content.mobs
+        video_sources = []
+        for pkg in all_packages:
+            
+            if isinstance(pkg, aaf2.mobs.SourceMob):
+                if isinstance(pkg.descriptor, aaf2.essence.CDCIDescriptor):
+                    # this seems to be the structure of a "non ama" mxf
+                    video_sources.append(pkg)
+                    
+                if isinstance(pkg.descriptor, aaf2.essence.MultipleDescriptor):
+                    networklocator_path = next(iter(pkg.descriptor.locator[0].property_entries.values())).value
+                    video_sources.append(pkg)
+
+        #do the acutal work
+        for src in video_sources:
+            tag = f.create.TaggedValue("_COLOR_INPUT_TRANSFORMATION",  work_lut) 
+            src['MobAttributeList'].append(tag)

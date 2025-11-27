@@ -147,11 +147,11 @@ def main():
             colors = extract_xml_from_sony_mp4(str(sys.argv[1]))
             if colors:
                 if "TransferCharacteristic" in colors:
-                    print(f" --transfer-ch {colors['TransferCharacteristic']}", end=" ")
+                    print(f" --transfer-ch urn:smpte:ul:{colors['TransferCharacteristic']}", end=" ")
                 if "ColorPrimaries" in colors:
-                    print(f" --color-prim {colors['ColorPrimaries']}", end=" ")
+                    print(f" --color-prim urn:smpte:ul:{colors['ColorPrimaries']}", end=" ")
                 if "CodingEquations" in colors:
-                    print(f" --coding-eq {colors['CodingEquations']}", end=" ")
+                    print(f" --coding-eq urn:smpte:ul:{colors['CodingEquations']}", end=" ")
             
         except:
             pass

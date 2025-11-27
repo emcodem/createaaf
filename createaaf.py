@@ -36,6 +36,16 @@ created_file_count = 0
 target_filename = None
 args = None
 
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 # logging.debug("sys.argv before parsing: %s", sys.argv)
 # sys.argv = [
 #     arg[:-1] if arg.endswith('"') and arg[-2] == '\\' else arg
@@ -123,6 +133,10 @@ def process_directory(dir):
     
     if (args.allinone):
         packages = find_opatom_files(dir,args.report)
+        if (len(packages) == 0):
+            logging.debug("Did not find any opatom files.")
+            sys.exit(1)
+
         if (args.amalink != "1"):
             mxf_files = [f for f in all_files_in_dir if f.lower().endswith(".mxf")]
             if (len(mxf_files) == 0):
@@ -143,6 +157,12 @@ def process_directory(dir):
                         for _file in packages[pack]['files']:
                             first_src = first_src or _file
                             mobs = f.content.link_external_mxf(_file)
+                            for mob in mobs:
+                                if isinstance(mob, aaf2.mobs.SourceMob):
+                                    if isinstance(mob.descriptor, aaf2.essence.CDCIDescriptor):
+                                        #lut wants to go to the mob with videodescriptor
+                                        attachLUT(f,first_src,args.lut, target_mob=mob)
+                                        
                         updateReport(original_mxf,packages[pack]['files'][0])
                         logging.debug("<<<<<<<<<<<<<<<<")
                     if not first_src:
@@ -151,7 +171,7 @@ def process_directory(dir):
                     if not os.path.exists(first_src):
                         logging.error(f"The File does not exist: [{first_src}]")
                         sys.exit(1)
-                    attachLUT(f,first_src,args.lut) #todo: colors could vary for each file in package, why do we attach the lut "globally" in the source package?
+                     #todo: colors could vary for each file in package, why do we attach the lut "globally" in the source package?
                     finalizeReport()
 
                 checkResult(os.path.join(args.odir,args.oname))
@@ -262,7 +282,8 @@ def finalizeReport():
     # If all entries have added_to_aaf, delete the report
     if success_count == total_count:
         logging.info(f"All {total_count} entries processed successfully, deleting report file")
-        #os.remove(args.report)
+        if args.remove_success_report:
+            os.remove(args.report)
     else:
         # Collect missing files
         missing_files = [entry['original_file'] for entry in report_data 
@@ -377,8 +398,6 @@ def checkResult(_filename):
         sys.exit(1)
         
 def probe(path, show_packets=False):
-    p = subprocess.Popen("ffprobe", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return None
     stdout,stderr = p.communicate()
     if ("ffprobe" not in str(stderr)):
         raise Exception("ffprobe not found")
@@ -409,6 +428,8 @@ def setupParser(parser):
     parser.add_argument('--amalink', help='Create AMA linked aaf (needs ffprobe in PATH)')
     parser.add_argument('--allinone', help='Add all source files to a single aaf, cannot work for ama')
     parser.add_argument('--report', help='Only for "op-atom, allinone, folder input" mode. An existing report file that already contains a list of files to be processed, format: [{"original_file": "C:\\file1.mp4"}]. Only . If all files are created successfully, the report file is deleted, if not it stays and serves as indicator for errors ')
+    parser.add_argument('--remove-success-report', type=str2bool, nargs='?', const=True, default=False, help='Delete report file if all files were created successfully (only in combination with --report)')
+
     parser.add_argument('files', metavar='FILES OR FOLDERS', type=str, nargs='+',
                         help='files to add to package (or folder to scan for files)')
     parser.add_argument('--odir', 
@@ -480,6 +501,9 @@ def main():
         elif (os.path.isfile(_item)):
             filemode = 1
             logging.debug("Detected file from userinput: " + _item)
+        else:
+            logging.error("Input is not a valid file or directory: " + _item)
+            sys.exit(1)
     if (filemode):
         if args.odir == None:
             args.odir = os.path.dirname(args.files[0])
