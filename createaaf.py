@@ -50,35 +50,63 @@ def sort_filenames_video_first(name):
         return int(match.group(1))  # use the version number
     return float('inf')  # files without _vX go at the end
 
-def find_opatom_files(dir):
-    
-    logging.debug("Scanning for files in " + dir)
-    #foreach file in directory, get out Materialpackage ID and look if all needed parts of opatom file are there (video/audio)
+
+def find_opatom_files(dir, report=None):
+    """
+    Scan for OPAtom MXF files in a directory, optionally using a report to filter files.
+    Files are processed in order of youngest (most recently modified) first.
+    If a report is provided, only files referenced in the report are processed, and scanning stops when all are found.
+    """
+    logging.debug(f"Scanning for files in {dir}")
     all_packages = {}
-    for _file in os.listdir(dir):
-        logging.debug ("Processing file " + _file)
+
+
+
+    # If report is provided, parse it and get the set of files to process
+    file_paths = set()
+    if report:
+        try:
+            with open(report, 'r') as report_file:
+                report_data = json.load(report_file)
+                for entry in report_data:
+                    if 'avid_files' in entry:
+                        for f in entry['avid_files']:
+                            file_paths.add(f)
+        except Exception as e:
+            logging.warning(f"Could not read report file: {e}")
+    else:
+        # List all files in the directory, sort by modification time (youngest first)
+        file_paths = [os.path.join(dir, f) for f in os.listdir(dir)]
+        file_paths = [f for f in file_paths if os.path.isfile(f)]
+        file_paths.sort(key=lambda f: os.path.getmtime(f), reverse=True)
+
+    
+    for _file in file_paths:
+        logging.debug(f"Processing file {_file}")
         m = None
         try:
-            m = aaf2.mxf.MXFFile(os.path.join(dir , _file))
+            m = aaf2.mxf.MXFFile(_file)
             if m.operation_pattern != "OPAtom":
                 raise Exception("can only link OPAtom mxf files")
         except Exception as e:
-            logging.debug(_file + " is not an OPAtom mxf file " )
+            logging.debug(f"{_file} is not an OPAtom mxf file")
             continue
-            
-        _this_package = {'slotcount' : 0, 'files':[]}
-        _last_uid = None
-		#collect all referenced ID's of this file
-        for _pkg in (m.material_packages()):#there should be only one of these packages, todo: catch the case
-            _last_uid = _pkg.data['MobID']
-            _this_package['slotcount'] =  len(_pkg.data['Slots'])
 
-        if not(_last_uid in all_packages):
+        _this_package = {'slotcount': 0, 'files': []}
+        _last_uid = None
+        # collect all referenced ID's of this file
+        for _pkg in m.material_packages():
+            _last_uid = _pkg.data['MobID']
+            _this_package['slotcount'] = len(_pkg.data['Slots'])
+
+        if not (_last_uid in all_packages):
             all_packages[_last_uid] = _this_package
-        all_packages[_last_uid]['files'].append(os.path.join(dir,_file))
-        all_packages[_last_uid]['files'].sort(key=sort_filenames_video_first)    
+        all_packages[_last_uid]['files'].append(_file)
+        all_packages[_last_uid]['files'].sort(key=sort_filenames_video_first)
+
+
     logging.debug("Folderscan done, result:")
-    logging.debug (all_packages)
+    logging.debug(all_packages)
     return all_packages
        
 def process_directory(dir):
@@ -91,20 +119,23 @@ def process_directory(dir):
         args.oname = os.path.splitext(base)[0] + ".aaf"
         logging.debug("Calculated output filename:" + args.oname )
 
-    packages = find_opatom_files(dir)
-    if (args.amalink != "1"):
-        mxf_files = [f for f in all_files_in_dir if f.lower().endswith(".mxf")]
-        if (len(mxf_files) == 0):
-            logging.debug("No mxf files found in (use ama if you want to link non mxf)" + dir)
-            sys.exit(1)
+
     
     if (args.allinone):
+        packages = find_opatom_files(dir,args.report)
+        if (args.amalink != "1"):
+            mxf_files = [f for f in all_files_in_dir if f.lower().endswith(".mxf")]
+            if (len(mxf_files) == 0):
+                logging.debug("No mxf files found in (use ama if you want to link non mxf)" + dir)
+                sys.exit(1)
         if (len(packages) != 0):
             #op-atom files are grouped in packages
                 logging.debug("Mode: OP-Atom allinone non ama")
                 first_src = None
                 with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
+                    
                     for pack in packages:
+                        logging.debug(">>>>>>>>>>>>>>>>")
                         # todo: checkreport actually parses the mxf (inefficient), we could also use filtering by filenames from report to limit the number of parsed files
                         original_mxf = reportContainsFile(packages[pack]['files'][0])
                         if not original_mxf:
@@ -113,6 +144,7 @@ def process_directory(dir):
                             first_src = first_src or _file
                             mobs = f.content.link_external_mxf(_file)
                         updateReport(original_mxf,packages[pack]['files'][0])
+                        logging.debug("<<<<<<<<<<<<<<<<")
                     if not first_src:
                         logging.error("Did not find any original source file in any op-atom package.")
                         sys.exit(1)
@@ -138,6 +170,12 @@ def process_directory(dir):
         
     #non allinone mode
     if (len(packages) != 0 and args.amalink != "1"):
+        packages = find_opatom_files(dir)
+        if (args.amalink != "1"):
+            mxf_files = [f for f in all_files_in_dir if f.lower().endswith(".mxf")]
+            if (len(mxf_files) == 0):
+                logging.debug("No mxf files found in (use ama if you want to link non mxf)" + dir)
+                sys.exit(1)
         logging.debug("Mode: OP-Atom single file non ama")
         for pack in packages:
             if (args.skipcheck != None or packages[pack]['slotcount'] == len(packages[pack]['files'])):
@@ -210,7 +248,7 @@ def process_directory(dir):
     sys.exit(0)
 
 def finalizeReport():
-    # checks if all "original_file" entries in the report have a "created_file" entry, if yes delete the report, if not rename it with _error suffix
+    # checks if all "original_file" entries in the report have a "added_to_aaf" entry, if yes delete the report, if not rename it with _error suffix
     global args
     if args.report == None:
         return
@@ -219,16 +257,16 @@ def finalizeReport():
         report_data = json.load(report_file)
     
     total_count = len(report_data)
-    success_count = sum(1 for entry in report_data if 'created_file' in entry)
+    success_count = sum(1 for entry in report_data if 'added_to_aaf' in entry)
     
-    # If all entries have created_file, delete the report
+    # If all entries have added_to_aaf, delete the report
     if success_count == total_count:
         logging.info(f"All {total_count} entries processed successfully, deleting report file")
-        os.remove(args.report)
+        #os.remove(args.report)
     else:
         # Collect missing files
         missing_files = [entry['original_file'] for entry in report_data 
-                        if 'original_file' in entry and 'created_file' not in entry]
+                        if 'original_file' in entry and 'added_to_aaf' not in entry]
         
         # Insert missing list at the beginning
         report_with_missing = [{"missing": missing_files,
@@ -240,16 +278,18 @@ def finalizeReport():
         # Rename report file with _error suffix
         report_path = Path(args.report)
         error_report_path = report_path.parent / f"{report_path.stem}_ERROR{report_path.suffix}"
-                # Write updated report with missing files
+        # Write updated report with missing files
         with open(args.report, 'w') as report_file_out:
             json.dump(report_with_missing, report_file_out, indent=4)
         
         logging.warning(f"Only {success_count}/{total_count} entries processed, renaming report to {error_report_path}")
-        #os.rename(args.report, error_report_path) #TODO: uncomment
-        
+        Path(error_report_path).unlink(missing_ok=True)
+        os.rename(args.report, error_report_path) 
+        sys.exit(1001)
 
-def updateReport(mxf_path, created_file):
-    # finds the entry in report where original_file matches the mxf_path and adds created_file entry
+def updateReport(mxf_path, added_to_aaf):
+    # finds the entry in report where original_file matches the mxf_path and adds added_to_aaf entry
+    
     global args
     if args.report == None:
         return
@@ -259,18 +299,28 @@ def updateReport(mxf_path, created_file):
         report_data = json.load(report_file)
     
     # Find and update the matching entry
+    _found = False
     for entry in report_data:
         if 'original_file' in entry:
             #in the mxf locator, the url is stored and parsed using url rules. The Servername is defined as must lowercase, so we lower everything for comparison
-            if os.path.normpath(entry['original_file']).lower() == os.path.normpath(mxf_path).lower():
-                logging.debug("Attaching created_file to report for original_file: " + mxf_path)
-                entry['created_file'] = created_file
+            if (
+                os.path.normpath(entry.get('original_file', '')).lower() ==
+                os.path.normpath(mxf_path).lower()
+                or
+                os.path.normpath(entry.get('transcoded_file', '')).lower() ==
+                os.path.normpath(mxf_path).lower()
+            ):
+                logging.debug("Attaching added_to_aaf to report for original_file: " + mxf_path)
+                _found = True
+                entry['added_to_aaf'] = added_to_aaf
                 
                 # Write the updated data back to the file
                 with open(args.report, 'w') as report_file_out:
                     logging.debug("Writing updated report data to: " + args.report)
                     json.dump(report_data, report_file_out, indent=4)
                 break
+    if not _found:
+        logging.error("Could not find original_file in report to update: " + mxf_path)
 
 def reportContainsFile(file_path):
     # check if the original files (from mxf "locator" entry) path is contained in the report json 
@@ -294,17 +344,36 @@ def reportContainsFile(file_path):
     logging.debug("No matching original_file in report: " + found_paths[0])
     return False
     
+
+    MIN_SIZE = 400_000  # 400kb
+
 def checkResult(_filename):
     try:
-    
-    # Parse the MXF locator for paths
         size = os.path.getsize(_filename)
-    
-    # Iterate over the report entries and check if any match the found paths
-        if (size < 400000):
-            raise Exception("Created file [" +_filename+ "] does not have minimum file size of 400kb")
+        MIN_SIZE = 400_000  # 400kb
+        if size < MIN_SIZE:
+            raise Exception(f"Created file [{_filename}] does not have minimum file size of 400kb "
+                            f"(actual: {size} bytes)")
+
+        print(f"File OK: {_filename} ({size} bytes)")
+
     except Exception as e:
-        print ("Error: " + e)
+
+        # 1. Print readable error message
+        print("Error: " + str(e))  
+
+        # 2. Attempt to rename the file
+        dir_name = os.path.dirname(_filename)
+        base_name = os.path.basename(_filename)
+        error_name = "ERROR_" + base_name
+        new_path = os.path.join(dir_name, error_name)
+
+        try:
+            os.rename(_filename, new_path)
+            print(f"Renamed to: {new_path}")
+        except Exception as ren_err:
+            print(f"Failed to rename error file: {ren_err}", file=sys.stderr)
+
         sys.exit(1)
         
 def probe(path, show_packets=False):
@@ -439,8 +508,6 @@ def main():
                 checkResult(os.path.join(args.odir,args.oname))
                 print ("Created file: " + os.path.join(args.odir,args.oname))        
         
-        
-#todo: check if target file is greater than 111kb
 logging.debug("Done")
 
 if __name__ == '__main__':

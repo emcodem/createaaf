@@ -3,10 +3,10 @@
     "configurations": [
         {
             "name": "createaaf AMA",
-            "type": "debugpy",
+            "type": "python",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\python_portable\\python.exe",
-            "program": "createaaf.py",
+//            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.8\\python_portable\\python.exe",
+            "program": "${workspaceFolder}/createaaf.py",
             "args": [
                 "--odir", "C:\\temp\\1avid\\dnx36",
                 "--oname", "ama.aaf", 
@@ -22,26 +22,20 @@
         {
             
             "name": "createaaf.py",
-            "type": "debugpy",
+            "type": "python",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\python_portable\\python.exe",
-            "program": "createaaf.py",
+ //           "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.8\\python_portable\\python.exe",
+            "program": "${workspaceFolder}/createaaf.py",
             "args":  [
-                "--odir",
-                "\\\\localhost\\c$\\temp\\1avid\\dnx36",
-                "--oname",
-                "C002C025_250220UJ_CAM0C_25_11_20_18_19_45.aaf",
-                "--lut",
-                "auto",
-                "--skipcheck",
-                "1",
-                "--allinone",
-                "1",
-                "--debug",
-                "1",
-                "--report",
-                "c:\\.ffastrans_work_root\\20251108-2052-1155-69c5-6032a66254dd\\20251120-1819-2719-256c-7e708f6b4946\\report.json",
-                "\\\\localhost\\c$\\Users\\Public\\Documents\\Avid Media Composer\\Avid MediaFiles\\MXF\\1"
+                    "--odir", "\\\\localhost\\c$\\temp\\1avid\\dnx36",
+                    "--oname", "FX6_EO0002__25_11_27_18_18_31.aaf",
+                    "--lut", "auto",
+                    "--skipcheck", "1",
+                    "--allinone", "1",
+                    "--debug", "1",
+                    "--report", "\\\\localhost\\c$\\temp\\1avid\\dnx36\\report_FX6_EO0002_.json",
+                    "\\\\localhost\\c$\\Users\\Public\\Documents\\Avid Media Composer\\Avid MediaFiles\\MXF\\1"
+
             ],
             "console": "integratedTerminal"
         },
@@ -49,7 +43,7 @@
             "name": "analyze_colors.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\python_portable\\python.exe",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.8\\python_portable\\python.exe",
             "program": "analyze_mxf_colors.py",
             "args": [
                 "\\\\DESKTOP-3VMPAN6\\temp\\bearded\\zzzNew_Job_Template - 2025\\01_Rushes\\SONY\\2025_11_06\\SONY_CARD_NAME_1234\\XDROOT\\Clips\\sonyfx6.mxf"
@@ -62,7 +56,7 @@
             "name": "aaftimelineparser.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\python_portable\\python.exe",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.8\\python_portable\\python.exe",
             "program": "aaftimelineparser.py",
             "args": [
                 "-i",
@@ -72,7 +66,7 @@
                 "-s",
                 "C:\\temp\\1avid\\consolidated",
                 "-b",
-                "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.7\\bmx\\bmxtranswrap.exe",
+                "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.8\\bmx\\bmxtranswrap.exe",
                 "--ffmpeg",
                 "C:\\FFAStrans-Public-1.4.2\\processors\\FFMpeg\\x64\\ffmpeg.exe",
                 "-ha",
