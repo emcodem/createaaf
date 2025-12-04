@@ -111,6 +111,7 @@ def autoLUT(lut_table: dict, existing_mxf_file_path: str):
     trc = m.walker(search="TransferCharacteristic")
     if (trc == None):
         logging.error("Autolut failed, no trc in " + existing_mxf_file_path)
+        return None
     trc = aaf2.mxf.reverse_auid(trc).hex
     logging.debug(f"Found trc in mxf: {existing_mxf_file_path}: {trc}")
 

@@ -40,7 +40,7 @@
                 "--debug",
                 "1",
                 "--report",
-                "\\\\DESKTOP-3VMPAN6\\1avid\\dnx36\\report_SONY_CARD_NAME_1234.json",
+                "c:\\temp\\report.report.json",
                 "\\\\localhost\\c$\\Users\\Public\\Documents\\Avid Media Composer\\Avid MediaFiles\\MXF\\1"
             ],
             "console": "integratedTerminal"

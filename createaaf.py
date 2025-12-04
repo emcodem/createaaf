@@ -2,13 +2,13 @@
 import os
 import sys
 import sys 
-import glob, os
+import re, os
 import json
 import argparse
 import subprocess
-
-import re
 import logging
+
+import concurrent.futures
 #logging.basicConfig(format="%(asctime)s [%(levelname)s] %(message)s", level=logging.DEBUG)
 #addon modules (portable)
 
@@ -36,6 +36,8 @@ created_file_count = 0
 target_filename = None
 args = None
 
+print("Arguments object imported and ready to be used")
+
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -59,6 +61,33 @@ def sort_filenames_video_first(name):
     if match:
         return int(match.group(1))  # use the version number
     return float('inf')  # files without _vX go at the end
+
+
+def process_batch(batch):
+    partial_packages = {}
+    for _file in batch:
+        logging.debug(f"Processing file {_file}")
+        m = None
+        try:
+            m = aaf2.mxf.MXFFile(_file)
+            if m.operation_pattern != "OPAtom":
+                raise Exception("can only link OPAtom mxf files")
+        except Exception as e:
+            logging.debug(f"{_file} is not an OPAtom mxf file")
+            continue
+
+        _this_package = {'slotcount': 0, 'files': []}
+        _last_uid = None
+        # collect all referenced ID's of this file
+        for _pkg in m.material_packages():
+            _last_uid = _pkg.data['MobID']
+            _this_package['slotcount'] = len(_pkg.data['Slots'])
+
+        if not (_last_uid in partial_packages):
+            partial_packages[_last_uid] = _this_package
+        partial_packages[_last_uid]['files'].append(_file)
+        partial_packages[_last_uid]['files'].sort(key=sort_filenames_video_first)
+    return partial_packages
 
 
 def find_opatom_files(dir, report=None):
@@ -90,29 +119,22 @@ def find_opatom_files(dir, report=None):
         file_paths = [f for f in file_paths if os.path.isfile(f)]
         file_paths.sort(key=lambda f: os.path.getmtime(f), reverse=True)
 
+    batch_size = 50
+    file_list = list(file_paths)  # Convert set to list for batching
+    batches = [file_list[i:i + batch_size] for i in range(0, len(file_list), batch_size)]
     
-    for _file in file_paths:
-        logging.debug(f"Processing file {_file}")
-        m = None
-        try:
-            m = aaf2.mxf.MXFFile(_file)
-            if m.operation_pattern != "OPAtom":
-                raise Exception("can only link OPAtom mxf files")
-        except Exception as e:
-            logging.debug(f"{_file} is not an OPAtom mxf file")
-            continue
-
-        _this_package = {'slotcount': 0, 'files': []}
-        _last_uid = None
-        # collect all referenced ID's of this file
-        for _pkg in m.material_packages():
-            _last_uid = _pkg.data['MobID']
-            _this_package['slotcount'] = len(_pkg.data['Slots'])
-
-        if not (_last_uid in all_packages):
-            all_packages[_last_uid] = _this_package
-        all_packages[_last_uid]['files'].append(_file)
-        all_packages[_last_uid]['files'].sort(key=sort_filenames_video_first)
+    all_packages = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(process_batch, batch) for batch in batches]
+        for future in concurrent.futures.as_completed(futures):
+            partial_packages = future.result()
+            for uid, pkg in partial_packages.items():
+                if uid not in all_packages:
+                    all_packages[uid] = pkg
+                else:
+                    all_packages[uid]['files'].extend(pkg['files'])
+                    all_packages[uid]['files'].sort(key=sort_filenames_video_first)
+                    # Assuming slotcount is consistent across files in the same package
 
 
     logging.debug("Folderscan done, result:")
@@ -156,14 +178,18 @@ def process_directory(dir):
                             continue
                         for _file in packages[pack]['files']:
                             first_src = first_src or _file
+                            # if (_file.lower().endswith("v1.mxf") == True):
+                            #     logging.debug("Test skip: " + _file)
+                            #     continue
                             mobs = f.content.link_external_mxf(_file)
+                            updateReport(original_mxf,_file)
                             for mob in mobs:
                                 if isinstance(mob, aaf2.mobs.SourceMob):
                                     if isinstance(mob.descriptor, aaf2.essence.CDCIDescriptor):
                                         #lut wants to go to the mob with videodescriptor
                                         attachLUT(f,first_src,args.lut, target_mob=mob)
                                         
-                        updateReport(original_mxf,packages[pack]['files'][0])
+                        
                         logging.debug("<<<<<<<<<<<<<<<<")
                     if not first_src:
                         logging.error("Did not find any original source file in any op-atom package.")
@@ -172,8 +198,8 @@ def process_directory(dir):
                         logging.error(f"The File does not exist: [{first_src}]")
                         sys.exit(1)
                      #todo: colors could vary for each file in package, why do we attach the lut "globally" in the source package?
-                    finalizeReport()
-
+                    
+                finalizeReport()
                 checkResult(os.path.join(args.odir,args.oname))
                 return
         else:
@@ -235,7 +261,7 @@ def process_directory(dir):
                     attachLUT(f,sourcefiles[0])
                 checkResult(os.path.join(args.odir,args.oname))
                 print ("Created file: " + os.path.join(args.odir,args.oname))
-                args.oname = None # reset oname for next file            
+                args.oname = None # reset oname for next file
             else:
                 logging.debug("Not yet ready for processing, slotcount is " + str(packages[pack]['slotcount']) + " and filecount is " + str(len(packages[pack]['files'])))
                 logging.debug(packages[pack]['files'])
@@ -276,37 +302,61 @@ def finalizeReport():
     with open(args.report, 'r') as report_file:
         report_data = json.load(report_file)
     
-    total_count = len(report_data)
-    success_count = sum(1 for entry in report_data if 'added_to_aaf' in entry)
+    total_count_original_files = len(report_data)
+    success_count = 0
+    for entry in report_data:
+        if 'added_to_aaf' in entry and len(entry.get('added_to_aaf', [])) > 0:
+            success_count += 1
     
-    # If all entries have added_to_aaf, delete the report
-    if success_count == total_count:
-        logging.info(f"All {total_count} entries processed successfully, deleting report file")
+    # Collect missing files - entries that don't have added_to_aaf array or entries with mismatched file counts
+    missing_files = []
+    for entry in report_data:
+        if 'original_file' not in entry:
+            continue
+        
+        # Get expected file count from avid_files array if available
+        expected_count = len(entry.get('avid_files', []))
+        
+        # Get actual count of processed files from added_to_aaf array
+        actual_count = len(entry.get('added_to_aaf', []))
+        
+        # File is missing if:
+        # 1. No added_to_aaf array exists, OR
+        # 2. added_to_aaf count doesn't match expected avid_files count
+        if actual_count == 0 or (expected_count > 0 and actual_count < expected_count):
+            missing_files.append({
+                'original_file': entry['original_file'],
+                'expected_avid_files_in_aaf': expected_count,
+                'processed_avid_files_in_aaf': actual_count
+            })
+    
+    # If no mismatches found and remove_success_report is True, delete the report file
+    if len(missing_files) == 0:
         if args.remove_success_report:
+            logging.info(f"All {total_count_original_files} entries processed successfully with no count mismatches, deleting report file")
             os.remove(args.report)
-    else:
-        # Collect missing files
-        missing_files = [entry['original_file'] for entry in report_data 
-                        if 'original_file' in entry and 'added_to_aaf' not in entry]
-        
-        # Insert missing list at the beginning
-        report_with_missing = [{"missing": missing_files,
-                                "error_instructions": "Errors can only be checked manually. Check the job logs for more information."
-                                }] + report_data
-        
-
-        
-        # Rename report file with _error suffix
-        report_path = Path(args.report)
-        error_report_path = report_path.parent / f"{report_path.stem}_ERROR{report_path.suffix}"
-        # Write updated report with missing files
-        with open(args.report, 'w') as report_file_out:
-            json.dump(report_with_missing, report_file_out, indent=4)
-        
-        logging.warning(f"Only {success_count}/{total_count} entries processed, renaming report to {error_report_path}")
-        Path(error_report_path).unlink(missing_ok=True)
-        os.rename(args.report, error_report_path) 
-        sys.exit(1001)
+        else:
+            logging.info(f"All {total_count_original_files} entries processed successfully with no count mismatches")
+        sys.exit(0)
+    
+    # If there are mismatches, rename report with _error suffix
+    # Insert missing list at the beginning
+    report_with_missing = [{"missing": missing_files,
+                            "error_instructions": "Errors can only be checked manually. Check the job logs for more information."
+                            }] + report_data
+    
+    # Rename report file with _error suffix
+    report_path = Path(args.report)
+    error_report_path = report_path.parent / f"{report_path.stem}_ERROR{report_path.suffix}"
+    
+    # Write updated report with missing files
+    with open(args.report, 'w') as report_file_out:
+        json.dump(report_with_missing, report_file_out, indent=4)
+    
+    logging.warning(f"Found {len(missing_files)} entries with count mismatches, renaming report to {error_report_path}")
+    Path(error_report_path).unlink(missing_ok=True)
+    os.rename(args.report, error_report_path)
+    sys.exit(1001)
 
 def updateReport(mxf_path, added_to_aaf):
     # finds the entry in report where original_file matches the mxf_path and adds added_to_aaf entry
@@ -333,7 +383,9 @@ def updateReport(mxf_path, added_to_aaf):
             ):
                 logging.debug("Attaching added_to_aaf to report for original_file: " + mxf_path)
                 _found = True
-                entry['added_to_aaf'] = added_to_aaf
+                if 'added_to_aaf' not in entry:
+                    entry['added_to_aaf'] = []
+                entry['added_to_aaf'].append(added_to_aaf)
                 
                 # Write the updated data back to the file
                 with open(args.report, 'w') as report_file_out:
@@ -447,12 +499,24 @@ def main():
         setupParser(parser)
         args = parser.parse_args()
         logging.debug("Input arguments: %s",args)
+        print("\n" + "="*60)
+        print("PARSED ARGUMENTS:")
+        print("="*60)
+        for key, value in vars(args).items():
+            print(f"  {key:<20} = {value}")
+        print("="*60 + "\n")
     except:
         #dirty workaround only works outside of vscode, used to workaround python bug where you cannot submit arg like "C:\path\" (last backslash disturbing)
         parser = win_argparse.CustomArgumentParser( epilog="create AAF from OPAtom or AMA_linked from other formats" ) 
         setupParser(parser)
         args = parser.parse_args()
         logging.debug("Input arguments: %s",args)
+        print("\n" + "="*60)
+        print("PARSED ARGUMENTS (Custom Parser):")
+        print("="*60)
+        for key, value in vars(args).items():
+            print(f"  {key:<20} = {value}")
+        print("="*60 + "\n")
 
     #setup logging
     if args.debug:
