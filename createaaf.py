@@ -323,7 +323,7 @@ def finalizeReport():
         # File is missing if:
         # 1. No added_to_aaf array exists, OR
         # 2. added_to_aaf count doesn't match expected avid_files count
-        if actual_count == 0 or (expected_count > 0 and actual_count < expected_count):
+        if actual_count == 0 or (expected_count > 0 and actual_count < expected_count) or expected_count == 0:
             missing_files.append({
                 'original_file': entry['original_file'],
                 'expected_avid_files_in_aaf': expected_count,
