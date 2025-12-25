@@ -1,0 +1,2 @@
+[opentimelineio.plugins]
+otio_hls_playlist_adapter = otio_hls_playlist_adapter

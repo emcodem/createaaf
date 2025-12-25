@@ -1,0 +1,2 @@
+[opentimelineio.plugins]
+otio_maya_sequencer_adapter = otio_maya_sequencer_adapter
