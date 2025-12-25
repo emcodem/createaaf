@@ -314,6 +314,15 @@ def finalizeReport():
         if 'original_file' not in entry:
             continue
         
+        # Check if found_branch_report is missing or false
+        if not entry.get('found_branch_report', False):
+            entry['found_branch_report'] = False
+            missing_files.append({
+                'original_file': entry['original_file'],
+                'error': 'The original report contains this entry but the branch report is missing. This is unexpected and indicates a workflow misconfiguration error, check logs.'
+            })
+            continue
+        
         # Get expected file count from avid_files array if available
         expected_count = len(entry.get('avid_files', []))
         
