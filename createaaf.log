@@ -1552,3 +1552,127 @@ AttributeError: 'NoneType' object has no attribute 'hex'
 2025-12-25 11:51:36,501 - DEBUG - Autolut failed, no matching LUT found for trc: 060e2b34040101010401010101020000
 2025-12-25 11:51:36,501 - DEBUG - <<<<<<<<<<<<<<<<
 2025-12-25 11:51:36,562 - INFO - All 1 entries processed successfully with no count mismatches, deleting report file
+2025-12-28 13:53:38,965 - ERROR - Input is not a valid file or directory: C:\temp\1avid\original\dji\\
+2025-12-28 22:28:20,948 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-28 22:28:20,948 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_28_27924
+2025-12-28 22:28:20,948 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-28 22:28:20,958 - DEBUG - Processing file C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_942e3477-fee6-449d-80c6-2d7c828ae43d_0_H264GPU_a2.mxf
+2025-12-28 22:28:20,965 - DEBUG - Processing file C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_942e3477-fee6-449d-80c6-2d7c828ae43d_0_H264GPU_a1.mxf
+2025-12-28 22:28:20,971 - DEBUG - Processing file C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_942e3477-fee6-449d-80c6-2d7c828ae43d_0_H264GPU_v1.mxf
+2025-12-28 22:28:20,977 - DEBUG - Folderscan done, result:
+2025-12-28 22:28:20,977 - DEBUG - {urn:smpte:umid:060a2b34.01010105.01010f20.13000000.c75b1256.607941ad.8282ac43.844ce99e: {'slotcount': 3, 'files': ['C:\\temp\\1avid\\dnx36\\FFASTRANS03.5010\\20250421_KR_0013_942e3477-fee6-449d-80c6-2d7c828ae43d_0_H264GPU_v1.mxf', 'C:\\temp\\1avid\\dnx36\\FFASTRANS03.5010\\20250421_KR_0013_942e3477-fee6-449d-80c6-2d7c828ae43d_0_H264GPU_a2.mxf', 'C:\\temp\\1avid\\dnx36\\FFASTRANS03.5010\\20250421_KR_0013_942e3477-fee6-449d-80c6-2d7c828ae43d_0_H264GPU_a1.mxf']}}
+2025-12-28 22:28:20,977 - DEBUG - Mode: OP-Atom allinone non ama
+2025-12-28 22:28:21,032 - DEBUG - >>>>>>>>>>>>>>>>
+2025-12-28 22:28:21,037 - DEBUG - Found path in MXF Locator (C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_942e3477-fee6-449d-80c6-2d7c828ae43d_0_H264GPU_v1.mxf): [file:///C%3A/temp/bearded/zzzNew_Job_Template%20-%202025/01_Rushes/SONY_/2025_11_06/SER_FX3/20250421_KR_0013.MP4]
+2025-12-28 22:28:21,037 - DEBUG - Normalized path in MXF Locator (C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_942e3477-fee6-449d-80c6-2d7c828ae43d_0_H264GPU_v1.mxf): [C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4]
+2025-12-28 22:28:21,037 - DEBUG - Found matching transcoded_file in report for path: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-28 22:28:21,049 - DEBUG - Attaching added_to_aaf to report for original_file: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-28 22:28:21,050 - DEBUG - Writing updated report data to: C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_28_27924\report_20250421_KR_0013.json
+2025-12-28 22:28:21,056 - DEBUG - Found trc in mxf: C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_942e3477-fee6-449d-80c6-2d7c828ae43d_0_H264GPU_v1.mxf: 060e2b34040101010401010101020000
+2025-12-28 22:28:21,056 - DEBUG - Autolut failed, no matching LUT found for trc: 060e2b34040101010401010101020000
+2025-12-28 22:28:21,068 - DEBUG - Attaching added_to_aaf to report for original_file: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-28 22:28:21,068 - DEBUG - Writing updated report data to: C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_28_27924\report_20250421_KR_0013.json
+2025-12-28 22:28:21,081 - DEBUG - Attaching added_to_aaf to report for original_file: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-28 22:28:21,081 - DEBUG - Writing updated report data to: C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_28_27924\report_20250421_KR_0013.json
+2025-12-28 22:28:21,081 - DEBUG - <<<<<<<<<<<<<<<<
+2025-12-28 22:28:21,148 - INFO - All 1 entries processed successfully with no count mismatches, deleting report file
+2025-12-28 22:34:00,447 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-28 22:34:00,447 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_28_33311
+2025-12-28 22:34:00,447 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-28 22:34:00,454 - DEBUG - Processing file C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_247ef692-1591-46a4-af37-e0ca47d988dd_0_H264GPU_a2.mxf
+2025-12-28 22:34:00,461 - DEBUG - Processing file C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_247ef692-1591-46a4-af37-e0ca47d988dd_0_H264GPU_v1.mxf
+2025-12-28 22:34:00,467 - DEBUG - Processing file C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_247ef692-1591-46a4-af37-e0ca47d988dd_0_H264GPU_a1.mxf
+2025-12-28 22:34:00,472 - DEBUG - Folderscan done, result:
+2025-12-28 22:34:00,472 - DEBUG - {urn:smpte:umid:060a2b34.01010105.01010f20.13000000.b5cac540.24714f8b.b7c1bc0c.96b8de8b: {'slotcount': 3, 'files': ['C:\\temp\\1avid\\dnx36\\FFASTRANS03.5010\\20250421_KR_0013_247ef692-1591-46a4-af37-e0ca47d988dd_0_H264GPU_v1.mxf', 'C:\\temp\\1avid\\dnx36\\FFASTRANS03.5010\\20250421_KR_0013_247ef692-1591-46a4-af37-e0ca47d988dd_0_H264GPU_a2.mxf', 'C:\\temp\\1avid\\dnx36\\FFASTRANS03.5010\\20250421_KR_0013_247ef692-1591-46a4-af37-e0ca47d988dd_0_H264GPU_a1.mxf']}}
+2025-12-28 22:34:00,472 - DEBUG - Mode: OP-Atom allinone non ama
+2025-12-28 22:34:00,530 - DEBUG - >>>>>>>>>>>>>>>>
+2025-12-28 22:34:00,536 - DEBUG - Found path in MXF Locator (C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_247ef692-1591-46a4-af37-e0ca47d988dd_0_H264GPU_v1.mxf): [file:///C%3A/temp/bearded/zzzNew_Job_Template%20-%202025/01_Rushes/SONY_/2025_11_06/SER_FX3/20250421_KR_0013.MP4]
+2025-12-28 22:34:00,536 - DEBUG - Normalized path in MXF Locator (C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_247ef692-1591-46a4-af37-e0ca47d988dd_0_H264GPU_v1.mxf): [C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4]
+2025-12-28 22:34:00,536 - DEBUG - Found matching transcoded_file in report for path: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-28 22:34:00,548 - DEBUG - Attaching added_to_aaf to report for original_file: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-28 22:34:00,548 - DEBUG - Writing updated report data to: C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_28_33311\report_20250421_KR_0013.json
+2025-12-28 22:34:00,554 - DEBUG - Found trc in mxf: C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_247ef692-1591-46a4-af37-e0ca47d988dd_0_H264GPU_v1.mxf: 060e2b34040101010401010101020000
+2025-12-28 22:34:00,554 - DEBUG - Autolut failed, no matching LUT found for trc: 060e2b34040101010401010101020000
+2025-12-28 22:34:00,567 - DEBUG - Attaching added_to_aaf to report for original_file: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-28 22:34:00,567 - DEBUG - Writing updated report data to: C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_28_33311\report_20250421_KR_0013.json
+2025-12-28 22:34:00,579 - DEBUG - Attaching added_to_aaf to report for original_file: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-28 22:34:00,580 - DEBUG - Writing updated report data to: C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_28_33311\report_20250421_KR_0013.json
+2025-12-28 22:34:00,580 - DEBUG - <<<<<<<<<<<<<<<<
+2025-12-28 22:34:00,649 - INFO - All 1 entries processed successfully with no count mismatches, deleting report file
+2025-12-28 23:39:08,110 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-28 23:39:08,111 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_28_26976
+2025-12-28 23:39:08,111 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-28 23:39:08,118 - DEBUG - Folderscan done, result:
+2025-12-28 23:39:08,118 - DEBUG - {}
+2025-12-28 23:39:08,118 - DEBUG - Did not find any opatom files.
+2025-12-29 00:05:01,305 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 00:05:01,305 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_04848
+2025-12-29 00:05:01,305 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 00:05:01,307 - DEBUG - Folderscan done, result:
+2025-12-29 00:05:01,307 - DEBUG - {}
+2025-12-29 00:05:01,307 - DEBUG - Did not find any opatom files.
+2025-12-29 00:06:54,289 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 00:06:54,289 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_06719
+2025-12-29 00:06:54,289 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 00:06:54,291 - DEBUG - Folderscan done, result:
+2025-12-29 00:06:54,291 - DEBUG - {}
+2025-12-29 00:06:54,291 - DEBUG - Did not find any opatom files.
+2025-12-29 00:07:53,427 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 00:07:53,427 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_07179
+2025-12-29 00:07:53,427 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 00:07:53,429 - DEBUG - Folderscan done, result:
+2025-12-29 00:07:53,429 - DEBUG - {}
+2025-12-29 00:07:53,429 - DEBUG - Did not find any opatom files.
+2025-12-29 01:03:13,580 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 01:03:13,580 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_03386
+2025-12-29 01:03:13,580 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 01:03:13,582 - DEBUG - Folderscan done, result:
+2025-12-29 01:03:13,582 - DEBUG - {}
+2025-12-29 01:03:13,582 - DEBUG - Did not find any opatom files.
+2025-12-29 01:04:34,940 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 01:04:34,940 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_04914
+2025-12-29 01:04:34,941 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 01:04:34,943 - DEBUG - Folderscan done, result:
+2025-12-29 01:04:34,943 - DEBUG - {}
+2025-12-29 01:04:34,943 - DEBUG - Did not find any opatom files.
+2025-12-29 11:52:56,408 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 11:52:56,408 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_52675
+2025-12-29 11:52:56,408 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 11:52:56,416 - DEBUG - Folderscan done, result:
+2025-12-29 11:52:56,416 - DEBUG - {}
+2025-12-29 11:52:56,416 - DEBUG - Did not find any opatom files.
+2025-12-29 11:54:34,154 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 11:54:34,154 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_54161
+2025-12-29 11:54:34,154 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 11:54:34,156 - DEBUG - Folderscan done, result:
+2025-12-29 11:54:34,156 - DEBUG - {}
+2025-12-29 11:54:34,156 - DEBUG - Did not find any opatom files.
+2025-12-29 11:56:20,624 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 11:56:20,624 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_56972
+2025-12-29 11:56:20,624 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 11:56:20,626 - DEBUG - Folderscan done, result:
+2025-12-29 11:56:20,626 - DEBUG - {}
+2025-12-29 11:56:20,626 - DEBUG - Did not find any opatom files.
+2025-12-29 11:57:50,480 - DEBUG - Detected directory from userinput:C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 11:57:50,480 - DEBUG - Ensure output dire exists:C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_57839
+2025-12-29 11:57:50,480 - DEBUG - Scanning for files in C:\temp\1avid\dnx36\FFASTRANS03.5010
+2025-12-29 11:57:50,486 - DEBUG - Processing file C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_0082c497-dce5-4163-96e9-eb363459b1a6_0_H264GPU_v1.mxf
+2025-12-29 11:57:50,492 - DEBUG - Processing file C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_0082c497-dce5-4163-96e9-eb363459b1a6_0_H264GPU_a1.mxf
+2025-12-29 11:57:50,498 - DEBUG - Processing file C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_0082c497-dce5-4163-96e9-eb363459b1a6_0_H264GPU_a2.mxf
+2025-12-29 11:57:50,504 - DEBUG - Folderscan done, result:
+2025-12-29 11:57:50,504 - DEBUG - {urn:smpte:umid:060a2b34.01010105.01010f20.13000000.d8fbfec4.416348a9.bd8714ff.a6ef67a5: {'slotcount': 3, 'files': ['C:\\temp\\1avid\\dnx36\\FFASTRANS03.5010\\20250421_KR_0013_0082c497-dce5-4163-96e9-eb363459b1a6_0_H264GPU_v1.mxf', 'C:\\temp\\1avid\\dnx36\\FFASTRANS03.5010\\20250421_KR_0013_0082c497-dce5-4163-96e9-eb363459b1a6_0_H264GPU_a1.mxf', 'C:\\temp\\1avid\\dnx36\\FFASTRANS03.5010\\20250421_KR_0013_0082c497-dce5-4163-96e9-eb363459b1a6_0_H264GPU_a2.mxf']}}
+2025-12-29 11:57:50,504 - DEBUG - Mode: OP-Atom allinone non ama
+2025-12-29 11:57:50,558 - DEBUG - >>>>>>>>>>>>>>>>
+2025-12-29 11:57:50,564 - DEBUG - Found path in MXF Locator (C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_0082c497-dce5-4163-96e9-eb363459b1a6_0_H264GPU_v1.mxf): [file:///C%3A/temp/bearded/zzzNew_Job_Template%20-%202025/01_Rushes/SONY_/2025_11_06/SER_FX3/20250421_KR_0013.MP4]
+2025-12-29 11:57:50,564 - DEBUG - Normalized path in MXF Locator (C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_0082c497-dce5-4163-96e9-eb363459b1a6_0_H264GPU_v1.mxf): [C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4]
+2025-12-29 11:57:50,564 - DEBUG - Found matching transcoded_file in report for path: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-29 11:57:50,576 - DEBUG - Attaching added_to_aaf to report for original_file: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-29 11:57:50,576 - DEBUG - Writing updated report data to: C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_57839\report_20250421_KR_0013.json
+2025-12-29 11:57:50,588 - DEBUG - Found trc in mxf: C:\temp\1avid\dnx36\FFASTRANS03.5010\20250421_KR_0013_0082c497-dce5-4163-96e9-eb363459b1a6_0_H264GPU_v1.mxf: 060e2b34040101010401010101020000
+2025-12-29 11:57:50,588 - DEBUG - Autolut failed, no matching LUT found for trc: 060e2b34040101010401010101020000
+2025-12-29 11:57:50,601 - DEBUG - Attaching added_to_aaf to report for original_file: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-29 11:57:50,601 - DEBUG - Writing updated report data to: C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_57839\report_20250421_KR_0013.json
+2025-12-29 11:57:50,613 - DEBUG - Attaching added_to_aaf to report for original_file: C:\temp\bearded\zzzNew_Job_Template - 2025\01_Rushes\SONY_\2025_11_06\SER_FX3\20250421_KR_0013.MP4
+2025-12-29 11:57:50,613 - DEBUG - Writing updated report data to: C:\temp\1avid\dnx36\Stage_01_AAF\20250421_KR_0013_2025_12_29_57839\report_20250421_KR_0013.json
+2025-12-29 11:57:50,613 - DEBUG - <<<<<<<<<<<<<<<<
+2025-12-29 11:57:50,678 - INFO - All 1 entries processed successfully with no count mismatches, deleting report file
