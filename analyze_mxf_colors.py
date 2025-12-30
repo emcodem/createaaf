@@ -1,7 +1,7 @@
 #core modules
 import sys
 import sys 
-import os
+import glob, os
 import json
 import types
 import struct
@@ -22,13 +22,6 @@ import aaf2 # make sure you use our private aaf2 version
 import aaf2.mxf
 from aaf_helpers.aafhelpers import mxf_deep_search_by_key
 from aaf_helpers.avid_lut import translateSonyXmlValue
-
-# Check if env var ffas_py_args is set, if yes, push to sys.argv
-if 'ffas_py_args' in os.environ:
-    args = os.environ['ffas_py_args'].split()
-    sys.argv.extend(args)
-
-result = ""
 
 def extract_xml_from_sony_mp4(file_path, target_uuid=None):
     """
@@ -125,75 +118,48 @@ def extract_xml_from_sony_mp4(file_path, target_uuid=None):
 
 
 def main():
-    
-    import os
-    global result
-    global ffas_py_args
-    result = ""
-    # Check if env var ffas_py_args is set, if yes, push to sys.argv
-    ffas_py_args = ffas_py_args.decode('utf-8') if 'ffas_py_args' in globals() else False
-    if ffas_py_args:
-        sys.argv.extend(ffas_py_args)
     if len(sys.argv) < 2:
         print("Usage: analyze_mxf_colors.py <file_path>")
         sys.exit(1)
     
     try:
+
         # check if extension is mp4, if yes throw exception
         if (sys.argv[1].lower().endswith(".mp4")):
             raise Exception("This is an mp4 file.")
         m = aaf2.mxf.MXFFile(sys.argv[1])
 
         m.walker = types.MethodType(mxf_deep_search_by_key, m) #extend the MXFFile Class, we need "self" to work in mxf_deep_search_by_key
-        
+
         trc = m.walker(search="TransferCharacteristic")
         prim = m.walker(search="ColorPrimaries")
         eq = m.walker(search="CodingEquations")
         
-
         if (trc):
-            _toprint = " --transfer-ch urn:smpte:ul:" + aaf2.mxf.reverse_auid(trc).hex
-            print(_toprint, end=" ")
-            result += _toprint
+            print(" --transfer-ch urn:smpte:ul:" + aaf2.mxf.reverse_auid(trc).hex, end=" ")
         if (prim):
-            _toprint = " --color-prim urn:smpte:ul:" + aaf2.mxf.reverse_auid(prim).hex
-            print(_toprint, end=" ")
-            result += _toprint
+            print(" --color-prim urn:smpte:ul:" + aaf2.mxf.reverse_auid(prim).hex, end=" ")
         if (eq):
-            _toprint = " --coding-eq urn:smpte:ul:" + aaf2.mxf.reverse_auid(eq).hex
-            print(_toprint, end=" ")
-            result += _toprint
-        return result
+            print(" --coding-eq urn:smpte:ul:" + aaf2.mxf.reverse_auid(eq).hex, end=" ")
+
     except:
         try:
             colors = extract_xml_from_sony_mp4(str(sys.argv[1]))
             if colors:
                 if "TransferCharacteristic" in colors:
-                    _toprint = f" --transfer-ch urn:smpte:ul:{colors['TransferCharacteristic']}"
-                    print(_toprint, end=" ")
-                    result += _toprint
+                    print(f" --transfer-ch urn:smpte:ul:{colors['TransferCharacteristic']}", end=" ")
                 if "ColorPrimaries" in colors:
-                    _toprint = f" --color-prim urn:smpte:ul:{colors['ColorPrimaries']}"
-                    print(_toprint, end=" ")
-                    result += _toprint
+                    print(f" --color-prim urn:smpte:ul:{colors['ColorPrimaries']}", end=" ")
                 if "CodingEquations" in colors:
-                    _toprint = f" --coding-eq urn:smpte:ul:{colors['CodingEquations']}"
-                    print(_toprint, end=" ")
-                    result += _toprint
-            return result
+                    print(f" --coding-eq urn:smpte:ul:{colors['CodingEquations']}", end=" ")
+            
         except:
             pass
-        
         print("") # no colors found or newline
 
 
 if __name__ == '__main__':
-    
     try:
-        result = main()
-        if (result is None):
-            result = ""
+        main()
     except Exception as e:
-        result = e
         print(f"Error: {e}")
-
