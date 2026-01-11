@@ -6,6 +6,21 @@ import json
 import types
 import struct
 import xml.etree.ElementTree as ET
+import logging
+import time
+# Set up logging
+script_name = os.path.basename(__file__)
+log_filename = f"c:\\temp\\{script_name}_{int(time.time() * 1000)}.log"
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stderr),  # Log to stdout
+        logging.FileHandler(log_filename)   # Log to file
+    ]
+)
+logging.info(f"Logging to file: {log_filename}")
+
 # Install packages in venv (after moving the venv path):
 # python -m venv --upgrade C:\FFAStrans-Public-1.4.2\avid_tools\0.7\createaaf\venv
 # C:\FFAStrans-Public-1.4.2\avid_tools\0.7\createaaf\venv\Scripts\activate
@@ -118,6 +133,7 @@ def extract_xml_from_sony_mp4(file_path, target_uuid=None):
 
 
 def main():
+
     if len(sys.argv) < 2:
         print("Usage: analyze_mxf_colors.py <file_path>")
         sys.exit(1)

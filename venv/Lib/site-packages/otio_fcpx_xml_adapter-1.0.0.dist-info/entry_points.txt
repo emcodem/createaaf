@@ -1,0 +1,2 @@
+[opentimelineio.plugins]
+otio_fcpx_xml_adapter = otio_fcpx_xml_adapter

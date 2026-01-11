@@ -1,0 +1,2 @@
+[opentimelineio.plugins]
+otio_cmx3600_adapter = otio_cmx3600_adapter
