@@ -5,7 +5,7 @@
             "name": "createaaf AMA",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9\\python_portable\\python.exe",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9.4\\python_portable\\python.exe",
             "program": "${workspaceFolder}/createaaf.py",
             "args": [
                 "--odir", "C:\\temp\\1avid\\dnx36",
@@ -24,7 +24,7 @@
             "name": "createaaf.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9\\python_portable\\python.exe",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9.4\\python_portable\\python.exe",
             "program": "${workspaceFolder}/createaaf.py",
             "args":  [
                 "--odir",
@@ -46,13 +46,13 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "analyze_colors.py",
+            "name": "analyze_mxf_colors.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9\\python_portable\\python.exe",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9.4\\python_portable\\python.exe",
             "program": "analyze_mxf_colors.py",
             "args": [
-                "\\\\DESKTOP-3VMPAN6\\temp\\bearded\\zzzNew_Job_Template - 2025\\01_Rushes\\SONY\\2025_11_06\\SONY_CARD_NAME_1234\\XDROOT\\Clips\\sonyfx6.mxf"
+                "C:\\temp\\1avid\\01Rushes\\original\\sony\\XDROOT\\Clips\\sonyfx6.mxf"
             ],
             "console": "integratedTerminal"
         },
@@ -62,7 +62,7 @@
             "name": "aaftimelineparser.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9\\python_portable\\python.exe",
+            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9.4\\python_portable\\python.exe",
             "program": "aaftimelineparser.py",
             "args": [
                 "-i",
