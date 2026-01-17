@@ -36,7 +36,7 @@ created_file_count = 0
 target_filename = None
 args = None
 
-print("Arguments object imported and ready to be used")
+logging.info("Arguments object imported and ready to be used")
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -157,7 +157,7 @@ def process_directory(dir):
         packages = find_opatom_files(dir,args.report)
         if (len(packages) == 0):
             logging.debug("Did not find any opatom files.")
-            sys.exit(1)
+            
 
         if (args.amalink != "1"):
             mxf_files = [f for f in all_files_in_dir if f.lower().endswith(".mxf")]
@@ -260,7 +260,9 @@ def process_directory(dir):
                     #adds descriptive metadata to the aaf, mostly about controlling the avid metadata in the bin
                     attachLUT(f,sourcefiles[0])
                 checkResult(os.path.join(args.odir,args.oname))
-                print ("Created file: " + os.path.join(args.odir,args.oname))
+                file_path = os.path.join(args.odir,args.oname)
+                logging.info("Created file:")
+                logging.info(f"=== {file_path} ===")
                 args.oname = None # reset oname for next file
             else:
                 logging.debug("Not yet ready for processing, slotcount is " + str(packages[pack]['slotcount']) + " and filecount is " + str(len(packages[pack]['files'])))
@@ -362,9 +364,11 @@ def finalizeReport():
     with open(args.report, 'w') as report_file_out:
         json.dump(report_with_missing, report_file_out, indent=4)
     
+    print(error_report_path, file=sys.stderr)
     logging.warning(f"Found {len(missing_files)} entries with count mismatches, renaming report to {error_report_path}")
     Path(error_report_path).unlink(missing_ok=True)
     os.rename(args.report, error_report_path)
+
     sys.exit(1001)
 
 def updateReport(mxf_path, added_to_aaf):
@@ -388,6 +392,9 @@ def updateReport(mxf_path, added_to_aaf):
                 os.path.normpath(mxf_path).lower()
                 or
                 os.path.normpath(entry.get('transcoded_file', '')).lower() ==
+                os.path.normpath(mxf_path).lower()
+                or
+                os.path.normpath(entry.get('remaster_file', '')).lower() ==
                 os.path.normpath(mxf_path).lower()
             ):
                 logging.debug("Attaching added_to_aaf to report for original_file: " + mxf_path)
@@ -420,6 +427,9 @@ def reportContainsFile(file_path):
                 if 'transcoded_file' in entry and os.path.normpath(entry['transcoded_file']).lower() == os.path.normpath(path_from_mxf_locator).lower():
                     logging.debug("Found matching transcoded_file in report for path: " + path_from_mxf_locator)
                     return entry['transcoded_file']
+                if 'remaster_file' in entry and os.path.normpath(entry['remaster_file']).lower() == os.path.normpath(path_from_mxf_locator).lower():
+                    logging.debug("Found matching remaster_file in report for path: " + path_from_mxf_locator)
+                    return entry['remaster_file']
                 if os.path.normpath(entry['original_file']).lower() == os.path.normpath(path_from_mxf_locator).lower():
                     logging.debug("Found matching original_file in report for path: " + path_from_mxf_locator)
                     return entry['original_file']
@@ -437,12 +447,12 @@ def checkResult(_filename):
             raise Exception(f"Created file [{_filename}] does not have minimum file size of 400kb "
                             f"(actual: {size} bytes)")
 
-        print(f"File OK: {_filename} ({size} bytes)")
+        logging.info(f"File OK: {_filename} ({size} bytes)")
 
     except Exception as e:
 
         # 1. Print readable error message
-        print("Error: " + str(e))  
+        logging.error("Error: " + str(e))  
 
         # 2. Attempt to rename the file
         dir_name = os.path.dirname(_filename)
@@ -452,9 +462,9 @@ def checkResult(_filename):
 
         try:
             os.rename(_filename, new_path)
-            print(f"Renamed to: {new_path}")
+            logging.error(f"Renamed to: {new_path}")
         except Exception as ren_err:
-            print(f"Failed to rename error file: {ren_err}", file=sys.stderr)
+            logging.error(f"Failed to rename error file: {ren_err}")
 
         sys.exit(1)
         
@@ -508,35 +518,29 @@ def main():
         setupParser(parser)
         args = parser.parse_args()
         logging.debug("Input arguments: %s",args)
-        print("\n" + "="*60)
-        print("PARSED ARGUMENTS:")
-        print("="*60)
+        logging.info("\n" + "="*60)
+        logging.info("PARSED ARGUMENTS:")
+        logging.info("="*60)
         for key, value in vars(args).items():
-            print(f"  {key:<20} = {value}")
-        print("="*60 + "\n")
+            logging.info(f"  {key:<20} = {value}")
+        logging.info("="*60 + "\n")
     except:
         #dirty workaround only works outside of vscode, used to workaround python bug where you cannot submit arg like "C:\path\" (last backslash disturbing)
         parser = win_argparse.CustomArgumentParser( epilog="create AAF from OPAtom or AMA_linked from other formats" ) 
         setupParser(parser)
         args = parser.parse_args()
         logging.debug("Input arguments: %s",args)
-        print("\n" + "="*60)
-        print("PARSED ARGUMENTS (Custom Parser):")
-        print("="*60)
+        logging.info("\n" + "="*60)
+        logging.info("PARSED ARGUMENTS (Custom Parser):")
+        logging.info("="*60)
         for key, value in vars(args).items():
-            print(f"  {key:<20} = {value}")
-        print("="*60 + "\n")
+            logging.info(f"  {key:<20} = {value}")
+        logging.info("="*60 + "\n")
 
     #setup logging
     if args.debug:
         logging.info("Setting up debug logs")
-        script_dir = Path(__file__).resolve().parent
-        log_file = script_dir / "createaaf.log"
-        if os.path.exists(log_file) and os.path.getsize(log_file) > 1000000:
-            # Truncate (reset) the log file
-            open(log_file, "w").close()
         
-
         # Root logger
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
@@ -545,14 +549,8 @@ def main():
         if logger.hasHandlers():
             logger.handlers.clear()
 
-        # ----- File handler -----
-        file_handler = logging.FileHandler(log_file, mode='a')
-        file_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-        file_handler.setFormatter(file_formatter)
-        logger.addHandler(file_handler)
-
-        # ----- Console handler -----
-        console_handler = logging.StreamHandler()
+        # ----- Console handler (stdout) -----
+        console_handler = logging.StreamHandler(sys.stdout)
         console_formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
         console_handler.setFormatter(console_formatter)
         logger.addHandler(console_handler)
@@ -561,7 +559,7 @@ def main():
         logging.getLogger("aaf2.cfb").setLevel(logging.WARNING)
 
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     #process everything
 
     for _item in args.files:
@@ -595,7 +593,9 @@ def main():
                     #do we need to attach lut for ama?
                     logging.debug("AMA Added " + _item)
             checkResult(_item + ".aaf")
-            print ("Created file: " + _item + ".aaf")
+            file_path = _item + ".aaf"
+            logging.info("Created file:")
+            logging.info(f"=== {file_path} ===")
         else:
             for _item in args.files:
                 with aaf2.open(os.path.join(args.odir,args.oname), 'w') as f:
@@ -603,7 +603,9 @@ def main():
                         f.content.link_external_mxf(_file)
                         logging.debug("Added " + _file)
                 checkResult(os.path.join(args.odir,args.oname))
-                print ("Created file: " + os.path.join(args.odir,args.oname))        
+                file_path = os.path.join(args.odir,args.oname)
+                logging.info("Created file:")
+                logging.info(f"=== {file_path} ===")        
         
 logging.debug("Done")
 
