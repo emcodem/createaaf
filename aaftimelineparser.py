@@ -221,14 +221,17 @@ def _resolve_media(path,trackname,searchpaths = []):
     # if path is None:
     #     return trackname
 
+    trackname = unquote(trackname) # for some reason, otio did not urldecode the trackname
+    
     #try to find trackname in previously parsed locators from proxy mxf
     for _spath in searchpaths:
-        if _spath.lower().endswith((f"{trackname.lower()}.mxf", f"{trackname.lower()}.mp4", f"{trackname.lower()}")):
+        if _spath.lower().endswith((f"{trackname.lower()}.mxf", f"{trackname.lower()}.mp4", f"{trackname.lower()}.mov", f"{trackname.lower()}")):
             logging.debug(f"Found {trackname} in Path analyzed from proxy mxf: {_spath}")
             return _spath
 
     #fall back to the provided search path if any
     logging.error(f"Could not find {trackname} in proxy mxf pathlist.")
+    logging.error(f"Pathlist was: {searchpaths}")
     if (path == None):
         raise Exception("Could not find media file for clip: {}".format(trackname))
     
@@ -567,8 +570,20 @@ def main():
 
     # calc output file path
     for clip in main_clip_list:
-        _out_dir  = Path(args.output) / (str(Path(clip.path).stem) + "_" + str(clip.start) + "-" + str(clip.duration))
-        _out_file = _out_dir / Path(clip.path).name
+        _stem = Path(clip.path).stem
+        _start_dur = "_" + str(clip.start) + "-" + str(clip.duration)
+        _filename = Path(clip.path).name
+        _out_dir  = Path(args.output) / (_stem + _start_dur)
+        _out_file = _out_dir / _filename
+        # Windows MAX_PATH is 260; truncate stem if needed
+        if len(str(_out_file)) > 240:
+            excess = len(str(_out_file)) - 240
+            max_stem_len = len(_stem) - excess
+            if max_stem_len < 1:
+                max_stem_len = 1
+            _stem = _stem[:max_stem_len]
+            _out_dir  = Path(args.output) / (_stem + _start_dur)
+            _out_file = _out_dir / _filename
         clip.output_file    = _out_file
         clip.output_dir     = _out_dir
 
