@@ -82,6 +82,15 @@
             ],
             "console": "integratedTerminal"
         },
-      
+        {
+            "name": "otio_debug.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/otio_debug.py",
+            "args": [
+                "c:\\temp\\25p_sequence_2997_clip_in_at_1_sec_duration_1_sec.aaf"
+            ],
+            "console": "integratedTerminal"
+        }
     ]
 }

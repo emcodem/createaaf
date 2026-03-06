@@ -16,7 +16,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stderr),  # Log to stdout
-        logging.FileHandler(log_filename)   # Log to file
+        #logging.FileHandler(log_filename)   # Log to file
     ]
 )
 logging.info(f"Logging to file: {log_filename}")
