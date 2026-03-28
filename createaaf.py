@@ -187,7 +187,7 @@ def process_directory(dir):
                                 if isinstance(mob, aaf2.mobs.SourceMob):
                                     if isinstance(mob.descriptor, aaf2.essence.CDCIDescriptor):
                                         #lut wants to go to the mob with videodescriptor
-                                        attachLUT(f,first_src,args.lut, target_mob=mob)
+                                        attachLUT(f,_file,args.lut, target_mob=mob)
                                         
                         
                         logging.debug("<<<<<<<<<<<<<<<<")
