@@ -1,4 +1,3 @@
-
 ####
 #  aaftimelineparser.py
 # emcdem@ffasatrans.com
@@ -56,6 +55,14 @@ logging.basicConfig(
     level=logging.DEBUG,                   # minimum level to log
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
+
+# ---------------------------------------------------------------------------
+# I/O caches — keyed by source file path (str), populated on first access
+# ---------------------------------------------------------------------------
+_source_rate_cache: dict = {}      # path -> float frame rate
+_color_args_cache:  dict = {}      # path -> str bmx colour args
+_sony_xml_cache:    dict = {}      # path -> result dict from extract_xml_from_sony_mp4
+# ---------------------------------------------------------------------------
 
 class ProcessingCmd():
     def __init__(self, cmd, output):
@@ -244,22 +251,49 @@ def _resolve_media(path,trackname,searchpaths = []):
         
     return trackname
 
-# def generate_ffconcat(clips):
-#     lines = ["ffconcat version 1.0"]
-#     for clip in clips:
-#         # FFmpeg expects forward slashes even on Windows
-#         path_str = str(clip.path).replace("\\", "/")
-#         lines.append(f"file '{path_str}'")
-#         lines.append(f"inpoint {clip.start}")
-#         lines.append(f"outpoint {round(clip.duration + clip.start,3)}")
-#     logging.debug("\n" + "\n".join(lines))
-#     logging.info("\n" + "\n".join(lines))
-#     return "\n".join(lines)
-
 def get_source_rate(filepath):
-    media_info = MediaInfo.parse(filepath)
-    _parsed = float(media_info.video_tracks[0].frame_rate)
-    return _parsed
+    """Return frame rate for filepath, hitting disk only once per unique path."""
+    filepath = str(filepath)
+    if filepath not in _source_rate_cache:
+        media_info = MediaInfo.parse(filepath)
+        _source_rate_cache[filepath] = float(media_info.video_tracks[0].frame_rate)
+        logging.debug("Cached frame rate for %s: %s", filepath, _source_rate_cache[filepath])
+    return _source_rate_cache[filepath]
+
+def _get_color_args(path: str) -> str:
+    """Return bmx colour args for an MXF path, reading the file only once per unique path."""
+    if path in _color_args_cache:
+        logging.debug("Color args cache hit for %s", path)
+        return _color_args_cache[path]
+
+    color_args = ""
+    try:
+        m = aaf2.mxf.MXFFile(path)
+        m.walker = types.MethodType(mxf_deep_search_by_key, m)
+        trc  = m.walker(search="TransferCharacteristic")
+        prim = m.walker(search="ColorPrimaries")
+        eq   = m.walker(search="CodingEquations")
+
+        if trc:
+            color_args += " --transfer-ch urn:smpte:ul:" + aaf2.mxf.reverse_auid(trc).hex + " "
+        if prim:
+            color_args += " --color-prim urn:smpte:ul:" + aaf2.mxf.reverse_auid(prim).hex + " "
+        if eq:
+            color_args += " --coding-eq urn:smpte:ul:" + aaf2.mxf.reverse_auid(eq).hex + " "
+
+    except Exception:
+        logging.warning("Could not analyze colors for clip: %s", path)
+
+    _color_args_cache[path] = color_args
+    logging.debug("Colors for %s: %s", path, color_args)
+    return color_args
+
+def _get_sony_xml(path: str):
+    """Return Sony MP4 XML extraction result, hitting disk only once per unique path."""
+    if path not in _sony_xml_cache:
+        _sony_xml_cache[path] = analyze_mxf_colors.extract_xml_from_sony_mp4(path)
+        logging.debug("Cached Sony XML extraction for %s", path)
+    return _sony_xml_cache[path]
 
 def reversed_timecode(n):
     """
@@ -289,24 +323,21 @@ def frames_to_timecode(total_frames, fps=25):
 
 def generate_ffmpeg_copy_cmds(clips,output_path,ffmpeg_path):
     output_path = Path(output_path)
-    lines = []
     for clip in clips:
-        # # FFmpeg expects forward slashes even on Windows
-        # path_str = str(clip.path).replace("\\", "/")
         try:
             timecode = None
-            if (clip.path.lower().endswith(".mp4")):
-                result = analyze_mxf_colors.extract_xml_from_sony_mp4(clip.path)
+            if clip.path.lower().endswith(".mp4"):
+                # Use cached Sony XML extraction — avoids re-reading the same MP4
+                result = _get_sony_xml(clip.path)
                 if result and "xml" in result:
                     for elem in result["xml"].iter():
-                        # Ignore namespace by splitting at '}' if it exists
-                        tag_name = elem.tag.split('}')[-1]  # This strips the namespace
+                        tag_name = elem.tag.split('}')[-1]
                         if tag_name == 'LtcChange':
                             timecode = reversed_timecode(int(elem.attrib['value']))
-                            if (clip.start > 0):
+                            if clip.start > 0:
                                 f_fps = get_source_rate(clip.path)
                                 tc_frames = timecode_to_frames(timecode, f_fps)
-                                tc_frames += round(clip.start * f_fps) # adds start offset
+                                tc_frames += round(clip.start * f_fps)
                                 timecode = frames_to_timecode(tc_frames, f_fps)
                             _cmd = (f"\"{ffmpeg_path}\"  -i \"{str(clip.path)}\" -ss {clip.start} -t {clip.duration} -timecode {timecode} -map 0:v:0 -map 0:a? -codec copy -y \"{clip.output_file}\"")
                             clip.ffmpeg_copy_cmd = ProcessingCmd(_cmd, clip.output_file)
@@ -314,72 +345,44 @@ def generate_ffmpeg_copy_cmds(clips,output_path,ffmpeg_path):
         except Exception as e:
             logging.debug(f"Failed to generate ffmpeg copy command for clip {clip.path}: {e}")
             continue
-    
-    return
 
-def generate_bmx_cmds(clips,bmxtranswrap):
-    #for each clip, generate a bmx command for shell exec
-    
+def generate_bmx_cmds(clips, bmxtranswrap):
     _cmds = []
     for clip in clips:
         _out_dir  = clip.output_file.parent
         _out_file = clip.output_file
-        if not (str(_out_file).lower().endswith(".mxf")):
+        if not str(_out_file).lower().endswith(".mxf"):
             continue
 
         logging.debug("Analyzing colors for clip: %s", clip.path)
-        color_args = ""
-        try:
-            m = aaf2.mxf.MXFFile(str(clip.path))
-            m.walker = types.MethodType(mxf_deep_search_by_key, m) #extend the MXFFile Class, we need "self" to work in mxf_deep_search_by_key
-            trc = m.walker(search="TransferCharacteristic")
-            prim = m.walker(search="ColorPrimaries")
-            eq = m.walker(search="CodingEquations")
-            
-            if (trc):
-                color_args += (" --transfer-ch urn:smpte:ul:" + aaf2.mxf.reverse_auid(trc).hex) + " "
-            if (prim):
-                color_args += (" --color-prim urn:smpte:ul:" + aaf2.mxf.reverse_auid(prim).hex) + " "
-            if (eq):
-                color_args += (" --coding-eq urn:smpte:ul:" + aaf2.mxf.reverse_auid(eq).hex) + " "
+        # Use cached colour args — avoids re-opening the MXF for every cut of the same source
+        color_args = _get_color_args(str(clip.path))
 
-        except Exception:
-            logging.warning("Could not analyze colors for clip: %s", clip.path)
-            
-        logging.debug("Colors for clip: %s", color_args)
-        
-        # we consolidate each clip into its separate dir in order to support multiple cuts on a single source
-
-        logging.debug("Creating output directory: %s",_out_dir)
-        os.makedirs(_out_dir, exist_ok=True)
-        #_orig_rate = get_source_rate(str(clip.path)) # mediainfo todo: add timeline rate as default
+        # makedirs deferred to run_command; no need to create dirs here too
         bmxargs = [
-                   str (bmxtranswrap) + " -t op1a -o \""+str(_out_file)+"\" --start ",
+                   str(bmxtranswrap) + " -t op1a -o \""+str(_out_file)+"\" --start ",
                    clip.bmx_start_frames," --dur ",
                    clip.bmx_duration_frames,
                    color_args,
                    " \""+str(clip.path)+"\""]
         bmxargs = [str(x) for x in bmxargs]
-        bmxargs = " ".join(bmxargs)    
-        clip.bmx_cmd = ProcessingCmd(bmxargs,_out_file) 
-    return (_cmds)
+        bmxargs = " ".join(bmxargs)
+        clip.bmx_cmd = ProcessingCmd(bmxargs, _out_file)
+    return _cmds
 
 def apply_handle(clips: List[CutClip], handle: int = 0) -> None:
     """
-    Modifies start and duration of each CutClip 
+    Modifies start and duration of each CutClip.
+    Frame rate is retrieved from cache where possible.
     """
-    #todo: apply handle to actual clip.start and duration
     for clip in clips:
         orig_framerate = get_source_rate(str(clip.path))
         start_frames = clip.start * orig_framerate
         duration_frames = clip.duration * orig_framerate
         reduction = min(handle, start_frames)  # cannot reduce below 0
-        clip.bmx_start_frames = start_frames - reduction
-        clip.bmx_duration_frames = handle + reduction + duration_frames
         clip.bmx_start_frames = round(start_frames - reduction)
         clip.bmx_duration_frames = round(handle + reduction + duration_frames)
 
-        #ffmpeg processing needs the seconds. TODO: should we get rid of calculating bmx_start_frames and let the bmx command creator do it
         clip.start = round(clip.bmx_start_frames / orig_framerate, 3)
         clip.duration = round(clip.bmx_duration_frames / orig_framerate, 3)
         clip.output_file = None
@@ -388,21 +391,21 @@ def apply_handle(clips: List[CutClip], handle: int = 0) -> None:
 def run_command(cmd:str, clip:CutClip):
     """
     Runs a command, captures stdout/stderr, and returns a dict with all info.
+    Output directory is created here — the single authoritative place.
     """
-    _out_dir  = clip.output_file.parent
-    logging.debug("Creating output directory: %s",_out_dir)
+    _out_dir = clip.output_file.parent
+    logging.debug("Creating output directory: %s", _out_dir)
     os.makedirs(_out_dir, exist_ok=True)
 
     logging.debug("Running command: %s", cmd)
 
-    #create output file path for clip
     try:
         result = subprocess.run(
             cmd,
-            shell=True,               # use True for cross-platform shell commands
-            stdout=subprocess.PIPE,   # capture stdout
-            stderr=subprocess.PIPE,   # capture stderr
-            text=True                 # return strings instead of bytes
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
         )
         clip.processing_success = (result.returncode == 0)
         logging.debug("Command finished with return code %s", result.returncode)
@@ -426,27 +429,21 @@ def run_command(cmd:str, clip:CutClip):
             "success": False
         }
 
-def execute_commands(clip_list: List[CutClip],cmd_type):#cmd_type is bmx_cmd or ffmpeg_copy_cmd
-    #execute all bmx cmds parallel
+def execute_commands(clip_list: List[CutClip], cmd_type):
     results = []
     
-    # Filter clips that have bmx commands
     clips_with_cmd_type = [cmd for cmd in clip_list if getattr(cmd, cmd_type) is not None]
     
-    # Log commands to be executed
     for cmd in clips_with_cmd_type:
         logging.debug("Executing: " + "\n" + getattr(cmd, cmd_type).cmd)
     
     with ThreadPoolExecutor() as executor:
-        # Submit all commands
         future_to_cmd = {}
         for clip in clips_with_cmd_type:
-            future = executor.submit(run_command, getattr(clip, cmd_type).cmd,clip)
+            future = executor.submit(run_command, getattr(clip, cmd_type).cmd, clip)
             future_to_cmd[future] = getattr(clip, cmd_type).cmd
         
-        # Wait for completion and process results
         for future in as_completed(future_to_cmd):
-            #check if failed, if yes, execute ffmpeg cmd
             result = future.result()
 
 def write_output_aaf(all_outputs):
@@ -458,17 +455,15 @@ def write_output_aaf(all_outputs):
             for _file in all_outputs:
                 meta = ""
                 if not str(_file).lower().endswith(".mxf"):
-                    #we need the probe only for non mxf because aaf2 does parse mxf natively
                     meta = exec_ffprobe.get_ffprobe_info(str(_file))
                 logging.debug("AMA linking file: %s",_file)
-                f.content.create_ama_link(str(_file),meta) # todo emcodem: find out why ama linking dont work 
+                f.content.create_ama_link(str(_file),meta)
                 attachLUT(f,str(_file),"auto")
 
 def copy_files_parallel(clip_list:List[CutClip], target_dir, max_workers=4):
     logging.debug("Ensure output dir: %s",target_dir)
     os.makedirs(target_dir, exist_ok=True)
     target_dir = Path(target_dir)
-    
 
     def copy_file(src: CutClip):
         src_path = Path(src.path)
@@ -495,7 +490,6 @@ def main():
     args = _parsed_args()
     logging.debug("Creating output dir: %s",args.output)
     os.makedirs(args.output, exist_ok=True)
-    #todo: searchpaths can contain the original mxf paths, consider them at resolving media
     searchpaths = []
     try:
         locator_urls = parseLocatorFromAAF()
@@ -505,7 +499,7 @@ def main():
     try:
         for locator_url in locator_urls:
             searchpaths.extend(parseLocatorFromMXF(locator_url))
-        if (len(searchpaths) == 0):
+        if len(searchpaths) == 0:
             logging.debug("Did not find any locators in the MXF files that were parsed from the AAF")
     except Exception as e:
         logging.error(f"Unexprected Error parsing MXF locators: {e}", exc_info=True)
@@ -525,7 +519,6 @@ def main():
                 continue
             if isinstance(item, otio.schema.Clip):
                 sr = item.source_range
-                # we hacked the original_file_name into the metadata in advanced_authoring_format.py, no clue if we could determine audio/video files from it
                 if (item.metadata.get("AAF", {}).get("original_file_name")):
                     item.name = item.metadata["AAF"]["original_file_name"]
                     logging.debug(f"Using original_file_name: {item.name}")
@@ -534,29 +527,14 @@ def main():
                     raise Exception("Could not find media for Clip " + item.name)
                 logging.debug(f"Working on Clip: {_path}")
                 if sr:
-                    # sad but true, otio is not able to give back the start_time in seconds, it uses the project rate instead of the source rate
+                    # get_source_rate uses cache — first call per unique path hits disk, rest are free
                     real_rate = get_source_rate(_path)
                     my_start_time = sr.start_time.value / real_rate
                     my_duration = sr.duration.value / real_rate
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    #this is for most recent otio pyaaf adapter where we calculate with the real timecode not zero tc
-                    #my_start_time = sr.start_time.to_seconds() - item.media_reference.available_range.start_time.to_seconds()
-                    #y_duration = sr.duration.to_seconds()
-                    
-                    #sr.start_time.rate = real_rate
-                    #sr.duration.rate   = real_rate
                     logging.debug(f"    Source range: start={my_start_time}, duration={my_duration}")
                     main_clip_list.append(
-                        #bmx wants edit units
                         CutClip(path=_path, start=my_start_time, duration=my_duration)
                         )
-                    
                 else:
                     logging.debug("    Source range: None")
 
@@ -565,8 +543,8 @@ def main():
     # as a last resort, if both bmx and ffmpeg failed, just copy the input file.
     #
     
-    # applies handle
-    apply_handle(main_clip_list,args.handle)
+    # apply_handle also calls get_source_rate — hits cache, no extra disk reads
+    apply_handle(main_clip_list, args.handle)
 
     # calc output file path
     for clip in main_clip_list:
@@ -584,12 +562,12 @@ def main():
             _stem = _stem[:max_stem_len]
             _out_dir  = Path(args.output) / (_stem + _start_dur)
             _out_file = _out_dir / _filename
-        clip.output_file    = _out_file
-        clip.output_dir     = _out_dir
+        clip.output_file = _out_file
+        clip.output_dir  = _out_dir
 
-    if (args.output_json):
-        generate_bmx_cmds(main_clip_list,args.bmx)
-        generate_ffmpeg_copy_cmds(main_clip_list,args.output,args.ffmpeg)
+    if args.output_json:
+        generate_bmx_cmds(main_clip_list, args.bmx)
+        generate_ffmpeg_copy_cmds(main_clip_list, args.output, args.ffmpeg)
         with open(args.output_json, 'w') as json_file:
             import json
             json_data = []
@@ -608,32 +586,26 @@ def main():
             logging.info(f"Wrote output JSON with commands to: {args.output_json}")
             return
 
-    generate_bmx_cmds(main_clip_list,args.bmx)
+    generate_bmx_cmds(main_clip_list, args.bmx)
 
-    all_output_files = execute_commands(main_clip_list,"bmx_cmd")    
+    all_output_files = execute_commands(main_clip_list, "bmx_cmd")
     # if bmx failed, try ffmpeg
-    ffmpeg_clips = []
-    for clip in main_clip_list:
-        if not clip.processing_success:
-            ffmpeg_clips.append(
-                clip
-            )
+    ffmpeg_clips = [clip for clip in main_clip_list if not clip.processing_success]
 
-    generate_ffmpeg_copy_cmds(ffmpeg_clips,args.output,args.ffmpeg)
+    generate_ffmpeg_copy_cmds(ffmpeg_clips, args.output, args.ffmpeg)
 
-    execute_commands(ffmpeg_clips,"ffmpeg_copy_cmd")
+    execute_commands(ffmpeg_clips, "ffmpeg_copy_cmd")
 
     # if ffmpeg also failed, do a simple copy
     copy_clips = []
     seen_output_files = set()
     for clip in main_clip_list:
-        #full copy only needs one output file
         if not clip.processing_success and clip.output_file not in seen_output_files:
             copy_clips.append(clip)
             seen_output_files.add(clip.output_file)
 
-    if (len(copy_clips) > 0):
-        copy_files_parallel(copy_clips,args.output)
+    if len(copy_clips) > 0:
+        copy_files_parallel(copy_clips, args.output)
         
     write_output_aaf(all_output_files)
 
