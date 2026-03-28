@@ -578,8 +578,8 @@ def main():
                     "duration": clip.duration,
                     "output_file": str(clip.output_file),
                     "output_dir": str(clip.output_dir),
-                    "bmx_cmd": clip.bmx_cmd.cmd if clip.bmx_cmd else None,
-                    "ffmpeg_copy_cmd": clip.ffmpeg_copy_cmd.cmd if clip.ffmpeg_copy_cmd else None
+                    "ffmpeg_copy_cmd": clip.ffmpeg_copy_cmd.cmd if clip.ffmpeg_copy_cmd else None,
+                    "bmx_cmd": clip.bmx_cmd.cmd if clip.bmx_cmd else None
                 }
                 json_data.append(clip_dict)
             json.dump(json_data, json_file, indent=4)

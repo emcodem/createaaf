@@ -5,7 +5,7 @@
             "name": "createaaf AMA",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9.4\\python_portable\\python.exe",
+            "python": "${workspaceFolder}/../python_portable/python.exe",
             "program": "${workspaceFolder}/createaaf.py",
             "args": [
                 "--odir", "C:\\temp\\1avid\\dnx36",
@@ -24,7 +24,7 @@
             "name": "createaaf.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9.4\\python_portable\\python.exe",
+            "python": "${workspaceFolder}/../python_portable/python.exe",
             "program": "${workspaceFolder}/createaaf.py",
             "args":  [
                 "--odir",
@@ -49,7 +49,7 @@
             "name": "analyze_mxf_colors.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9.4\\python_portable\\python.exe",
+            "python": "${workspaceFolder}/../python_portable/python.exe",
             "program": "analyze_mxf_colors.py",
             "args": [
                 "C:\\temp\\1avid\\01Rushes\\original\\sony\\XDROOT\\Clips\\sonyfx6.mxf"
@@ -62,7 +62,7 @@
             "name": "aaftimelineparser.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "C:\\FFAStrans-Public-1.4.2\\avid_tools\\0.9.4\\python_portable\\python.exe",
+            "python": "${workspaceFolder}/../python_portable/python.exe",
             "program": "aaftimelineparser.py",
             "args": [
                 "-i",
