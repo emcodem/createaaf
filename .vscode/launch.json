@@ -20,6 +20,23 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "createaaf_recursive_allinone_ama.py",
+            "type": "debugpy",
+            "request": "launch",
+            "justMyCode": false,
+            "python": "${workspaceFolder}/../python_portable/python.exe",
+            "program": "${workspaceFolder}/createaaf_recursive_allinone_ama.py",
+            "args": [
+                "C:\\temp\\simon_ama_link",
+                "--odir",
+                "C:\\temp\\simon_ama_link",
+                "--oname",
+                "allinone_ama.aaf",
+                "--debug"
+            ],
+            "console": "integratedTerminal"
+        },
+        {
             
             "name": "createaaf.py",
             "type": "debugpy",
