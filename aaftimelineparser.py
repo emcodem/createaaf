@@ -207,6 +207,8 @@ def parseLocatorFromMXF(proxy_mxf_path):
     #parse the mxf and find the network locator - if any
     #the usecase for this is that the parsed aaf may contain only proxy mxf, these could potentially carry hints about the location of original essence
     found_paths = []
+    proxy_mxf_path = str(proxy_mxf_path).replace("\\MXF_TEMP\\", "\\MXF\\")
+    print("Replaced MXF_TEMP with MXF in path: " + proxy_mxf_path)
     m = aaf2.mxf.MXFFile(proxy_mxf_path)
     for _obj in m.objects.items():
         try:
