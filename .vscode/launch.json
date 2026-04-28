@@ -5,7 +5,7 @@
             "name": "createaaf AMA",
             "type": "debugpy",
             "request": "launch",
-            "python": "${workspaceFolder}/../python_portable/python.exe",
+            "python": "\\\\nexisedge\\ffastrans\\avid_tools\\1.2\\python_portable\\python.exe",
             "program": "${workspaceFolder}/createaaf.py",
             "args": [
                 "--odir", "C:\\temp\\1avid\\dnx36",
@@ -20,28 +20,11 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "createaaf_recursive_allinone_ama.py",
-            "type": "debugpy",
-            "request": "launch",
-            "justMyCode": false,
-            "python": "${workspaceFolder}/../python_portable/python.exe",
-            "program": "${workspaceFolder}/createaaf_recursive_allinone_ama.py",
-            "args": [
-                "C:\\temp\\simon_ama_link",
-                "--odir",
-                "C:\\temp\\simon_ama_link",
-                "--oname",
-                "allinone_ama.aaf",
-                "--debug"
-            ],
-            "console": "integratedTerminal"
-        },
-        {
             
             "name": "createaaf.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "${workspaceFolder}/../python_portable/python.exe",
+            "python": "\\\\nexisedge\\ffastrans\\avid_tools\\1.2\\python_portable\\python.exe",
             "program": "${workspaceFolder}/createaaf.py",
             "args":  [
                 "--odir",
@@ -66,7 +49,7 @@
             "name": "analyze_mxf_colors.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "${workspaceFolder}/../python_portable/python.exe",
+            "python": "\\\\nexisedge\\ffastrans\\avid_tools\\1.2\\python_portable\\python.exe",
             "program": "analyze_mxf_colors.py",
             "args": [
                 "C:\\temp\\1avid\\01Rushes\\original\\sony\\XDROOT\\Clips\\sonyfx6.mxf"
@@ -79,7 +62,7 @@
             "name": "aaftimelineparser.py",
             "type": "debugpy",
             "request": "launch",
-            "python": "${workspaceFolder}/../python_portable/python.exe",
+            "python": "\\\\nexisedge\\ffastrans\\avid_tools\\1.2\\python_portable\\python.exe",
             "program": "aaftimelineparser.py",
             "args": [
                 "-i",
@@ -107,6 +90,22 @@
             "args": [
                 "c:\\temp\\25p_sequence_2997_clip_in_at_1_sec_duration_1_sec.aaf"
             ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "aaftimelineparser_v2 Test speed",
+            "type": "debugpy",
+            "request": "launch",
+            "justMyCode": false,
+            "python": "\\\\nexisedge\\ffastrans\\avid_tools\\1.2\\python_portable\\python.exe",
+            "program": "${workspaceFolder}/aaftimelineparser_v2.py",
+            "args": [
+                "-i",
+                "\\\\SeriousNexis\\zffastrans_automated_testing\\Reference_AAF\\Dissolve at the end of cut.aaf",
+                "-o",
+                "${workspaceFolder}\\_test_output_parser_v2"
+            ],
+            "env": { "VIRTUAL_ENV": "" },
             "console": "integratedTerminal"
         }
     ]
