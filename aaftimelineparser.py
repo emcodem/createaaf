@@ -1,3 +1,6 @@
+### DEPRECATED; USE V2
+
+
 ####
 #  aaftimelineparser.py
 # emcdem@ffasatrans.com
