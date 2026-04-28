@@ -1,3 +1,7 @@
+#
+This repo uses submodule, clone with:
+git clone --recursive https://github.com/emcodem/createaaf.git
+
 # createaaf
 Locates OPAtom mxf files that belong together and creates aaf which contains links to the audio/video opatom files. Mainly designed to be driven by automation tools, especially a commandline executor node in http://ffastrans.com/.
 

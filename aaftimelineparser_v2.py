@@ -45,7 +45,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "venv/Lib/site-packages/
 
 # Local editable clone of otio-aaf-adapter at avid_tools/<ver>/otio-aaf-adapter — wins over the wheel in venv site-packages.
 # Plugin manifest must be set via env var because no dist-info entry points exist for a raw source tree.
-_otio_aaf_src = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "otio-aaf-adapter", "src"))
+_otio_aaf_src = os.path.normpath(os.path.join(os.path.dirname(__file__), "adapters", "otio-aaf-adapter", "src"))
 sys.path.insert(0, _otio_aaf_src)
 os.environ["OTIO_PLUGIN_MANIFEST_PATH"] = os.path.join(_otio_aaf_src, "otio_aaf_adapter", "plugin_manifest.json")
 
