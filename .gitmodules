@@ -1,0 +1,3 @@
+[submodule "adapters/otio-aaf-adapter"]
+	path = adapters/otio-aaf-adapter
+	url = https://github.com/OpenTimelineIO/otio-aaf-adapter.git
