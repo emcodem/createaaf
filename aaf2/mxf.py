@@ -267,10 +267,10 @@ class MXFPackage(MXFObject):
         name = self.data.get('Name', None)
         if name:
             mob.name = name
-        else:
-            source_path = getattr(self.root, 'path', None)
-            if source_path:
-                mob.name = os.path.splitext(os.path.basename(source_path))[0]
+        # else:
+            # source_path = getattr(self.root, 'path', None)
+            # if source_path:
+                # mob.name = os.path.splitext(os.path.basename(source_path))[0]
         
         for track in self.iter_strong_refs("Slots"):
             # print(type(track), track)

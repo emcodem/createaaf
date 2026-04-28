@@ -19,7 +19,7 @@ logging.basicConfig(
         #logging.FileHandler(log_filename)   # Log to file
     ]
 )
-logging.info(f"Logging to file: {log_filename}")
+#logging.info(f"Logging to file: {log_filename}")
 
 # Install packages in venv (after moving the venv path):
 # python -m venv --upgrade C:\FFAStrans-Public-1.4.2\avid_tools\0.7\createaaf\venv

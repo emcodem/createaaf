@@ -146,6 +146,7 @@ def attachLUT(f: aaf2.file.AAFFile, existing_mxf_file_path: str, lut_select: str
     if lut_select == "auto": 
         try:
             work_lut = autoLUT(lut_table, existing_mxf_file_path)
+            logging.debug(f"AUTOLUT decision for existing file \"{existing_mxf_file_path}\": {work_lut}")
         except:
             logging.debug("unexpected error in Autolut for " + existing_mxf_file_path)
             logging.debug(traceback.format_exc())
@@ -161,11 +162,12 @@ def attachLUT(f: aaf2.file.AAFFile, existing_mxf_file_path: str, lut_select: str
     
     #if video mob was provided, just attach the lut there
     if target_mob is not None:
-        logging.debug(f"Attaching LUT: {work_lut}")
+        logging.debug(f"LUTLUT Attaching LUT: {work_lut}")
         tag = f.create.TaggedValue("_COLOR_INPUT_TRANSFORMATION",  work_lut) 
         target_mob['MobAttributeList'].append(tag)
         return
     else:
+        logging.debug(">>>>>>>>>>>>>>>>>>> No target mob in attachlut is deprecated")
         #if no mob was provided, attach the lut to all found video essences
         all_packages = f.content.mobs
         video_sources = []
